@@ -12,7 +12,7 @@ function httpError(status, code, message) {
 }
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", version: "0.4.0" });
 });
 
 app.get("/api/leave-requests", (req, res, next) => {
@@ -86,11 +86,7 @@ app.post("/api/leave-requests", (req, res, next) => {
 app.patch("/api/leave-requests/:id", (req, res, next) => {
   const { action, decided_by } = req.body;
 
-  if (
-    action !== "approve" &&
-    action !== "reject" &&
-    action !== "cancel"
-  ) {
+  if (action !== "approve" && action !== "reject" && action !== "cancel") {
     return next(
       httpError(
         400,
@@ -105,26 +101,21 @@ app.patch("/api/leave-requests/:id", (req, res, next) => {
     .get(req.params.id);
 
   if (!row) {
-    return next(
-      httpError(404, "NOT_FOUND", "no such leave request"),
-    );
+    return next(httpError(404, "NOT_FOUND", "no such leave request"));
   }
 
   // Cancel action
   if (action === "cancel") {
     if (row.status !== "PENDING") {
       return next(
-        httpError(
-          409,
-          "INVALID_STATE",
-          "request is already " + row.status,
-        ),
+        httpError(409, "INVALID_STATE", "request is already " + row.status),
       );
     }
 
-    db.prepare(
-      "UPDATE leave_requests SET status = ? WHERE id = ?",
-    ).run("CANCELLED", req.params.id);
+    db.prepare("UPDATE leave_requests SET status = ? WHERE id = ?").run(
+      "CANCELLED",
+      req.params.id,
+    );
 
     return res.json(
       db
@@ -136,16 +127,11 @@ app.patch("/api/leave-requests/:id", (req, res, next) => {
   // Approve / reject only allowed while pending
   if (row.status !== "PENDING") {
     return next(
-      httpError(
-        409,
-        "INVALID_STATE",
-        "request is already " + row.status,
-      ),
+      httpError(409, "INVALID_STATE", "request is already " + row.status),
     );
   }
 
-  const status =
-    action === "approve" ? "APPROVED" : "REJECTED";
+  const status = action === "approve" ? "APPROVED" : "REJECTED";
 
   db.prepare(
     `UPDATE leave_requests
@@ -155,9 +141,7 @@ app.patch("/api/leave-requests/:id", (req, res, next) => {
   ).run(status, decided_by || null, req.params.id);
 
   res.json(
-    db
-      .prepare("SELECT * FROM leave_requests WHERE id = ?")
-      .get(req.params.id),
+    db.prepare("SELECT * FROM leave_requests WHERE id = ?").get(req.params.id),
   );
 });
 
