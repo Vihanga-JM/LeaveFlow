@@ -16,8 +16,11 @@ app.get("/api/health", (req, res) => {
     status: "ok",
     version: "0.5.0",
     uptime: process.uptime(),
+    environment: "conflict-drill",
+
   });
 });
+
 app.get("/api/leave-requests", (req, res, next) => {
   const status = req.query.status;
 
