@@ -12,9 +12,12 @@ function httpError(status, code, message) {
 }
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", version: "0.4.0" });
+  res.json({
+    status: "ok",
+    version: "0.4.0",
+    uptime: process.uptime(),
+  });
 });
-
 app.get("/api/leave-requests", (req, res, next) => {
   const status = req.query.status;
 
