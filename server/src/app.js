@@ -85,64 +85,91 @@ app.post("/api/leave-requests", (req, res, next) => {
 });
 app.patch("/api/leave-requests/:id", (req, res, next) => {
   const { action, decided_by } = req.body;
-  if (action !== "approve" && action !== "reject") {
+
+  if (
+    action !== "approve" &&
+    action !== "reject" &&
+    action !== "cancel"
+  ) {
     return next(
       httpError(
         400,
         "VALIDATION_ERROR",
-        'action must be "approve" or "reject"',
+        'action must be "approve", "reject" or "cancel"',
       ),
     );
   }
-  const row = db
-    .prepare("SELECT * FROM leave_requests WHERE id = ?")
-    .get(req.params.id);
-  if (!row) return next(httpError(404, "NOT_FOUND", "no such leave request"));
-  if (row.status !== "PENDING") {
-    return next(
-      httpError(409, "INVALID_STATE", "request is already " + row.status),
-    );
-  }
-  const status = action === "approve" ? "APPROVED" : "REJECTED";
-  db.prepare(
-    `UPDATE leave_requests SET status = ?, decided_by = ?,
-     decided_at = datetime('now') WHERE id = ?`,
-  ).run(status, decided_by || null, req.params.id);
-  res.json(
-    db.prepare("SELECT * FROM leave_requests WHERE id = ?").get(req.params.id),
-  );
-});
 
-app.delete("/api/leave-requests/:id", (req, res, next) => {
   const row = db
     .prepare("SELECT * FROM leave_requests WHERE id = ?")
     .get(req.params.id);
 
   if (!row) {
-    return next(httpError(404, "NOT_FOUND", "no such leave request"));
-  }
-
-  if (row.status !== "PENDING") {
     return next(
-      httpError(409, "INVALID_STATE", "request is already " + row.status),
+      httpError(404, "NOT_FOUND", "no such leave request"),
     );
   }
 
-  db.prepare("UPDATE leave_requests SET status = 'CANCELLED' WHERE id = ?").run(
-    req.params.id,
+  // Cancel action
+  if (action === "cancel") {
+    if (row.status !== "PENDING") {
+      return next(
+        httpError(
+          409,
+          "INVALID_STATE",
+          "request is already " + row.status,
+        ),
+      );
+    }
+
+    db.prepare(
+      "UPDATE leave_requests SET status = ? WHERE id = ?",
+    ).run("CANCELLED", req.params.id);
+
+    return res.json(
+      db
+        .prepare("SELECT * FROM leave_requests WHERE id = ?")
+        .get(req.params.id),
+    );
+  }
+
+  // Approve / reject only allowed while pending
+  if (row.status !== "PENDING") {
+    return next(
+      httpError(
+        409,
+        "INVALID_STATE",
+        "request is already " + row.status,
+      ),
+    );
+  }
+
+  const status =
+    action === "approve" ? "APPROVED" : "REJECTED";
+
+  db.prepare(
+    `UPDATE leave_requests
+     SET status = ?, decided_by = ?,
+     decided_at = datetime('now')
+     WHERE id = ?`,
+  ).run(status, decided_by || null, req.params.id);
+
+  res.json(
+    db
+      .prepare("SELECT * FROM leave_requests WHERE id = ?")
+      .get(req.params.id),
   );
-
-  const updated = db
-    .prepare("SELECT * FROM leave_requests WHERE id = ?")
-    .get(req.params.id);
-
-  res.json(updated);
 });
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
-    error: { code: err.code || "INTERNAL", message: err.message },
+    error: {
+      code: err.code || "INTERNAL",
+      message: err.message,
+    },
   });
 });
 
-app.listen(4000, () => console.log("LeaveFlow v0 on http://localhost:4000"));
+app.listen(4000, () => {
+  console.log("LeaveFlow v0 on http://localhost:4000");
+});
