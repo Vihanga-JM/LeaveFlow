@@ -17,7 +17,6 @@ app.get("/api/health", (req, res) => {
     version: "0.5.0",
     uptime: process.uptime(),
     environment: "conflict-drill",
-
   });
 });
 
@@ -27,7 +26,9 @@ app.get("/api/leave-requests", (req, res, next) => {
   const validStatuses = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"];
 
   if (status && !validStatuses.includes(status)) {
-    return next(httpError(400, "VALIDATION_ERROR", "unknown status"));
+    return next(
+      httpError(400, "VALIDATION_ERROR", `unknown status: ${status}`),
+    );
   }
 
   if (status) {
