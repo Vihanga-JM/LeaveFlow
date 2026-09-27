@@ -1,0 +1,47 @@
+import { useState } from 'react';
+import { api } from './api';
+
+export default function Login({ onLogin }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+
+  async function submit(e) {
+    e.preventDefault();
+
+    try {
+      const data = await api('/auth/login', {
+        method: 'POST',
+        body: { email, password }
+      });
+
+      localStorage.setItem('token', data.token);
+      onLogin(data.user);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <h1>LeaveFlow</h1>
+
+      <input
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+
+      <button type="submit">Sign in</button>
+
+      {error && <p role="alert">{error}</p>}
+    </form>
+  );
+}

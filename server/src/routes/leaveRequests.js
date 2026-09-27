@@ -1,186 +1,218 @@
 const express = require("express");
 const pool = require("../db/pool");
+const { requireAuth } = require("../middleware/auth");
+const { asyncHandler } = require("../middleware/errors");
+const {
+  validate,
+  required,
+  isDate,
+} = require("../middleware/validate");
 
 const router = express.Router();
 
+router.use(requireAuth);
 
-const dayCount = (start,end)=>
-(
-  new Date(end)-new Date(start)
-) / 86400000;
+const dayCount = (start, end) =>
+  (new Date(end) - new Date(start)) / 86400000;
 
+router.post(
+  "/",
+  validate([
+    ["leave_type_id", required, "is required"],
+    ["start_date", isDate, "must be YYYY-MM-DD"],
+    ["end_date", isDate, "must be YYYY-MM-DD"],
+    [
+      "end_date",
+      (value, req) => value >= req.body.start_date,
+      "must be on or after start_date",
+    ],
+  ]),
+  asyncHandler(async (req, res) => {
+    const {
+      leave_type_id,
+      start_date,
+      end_date,
+      reason,
+    } = req.body;
 
+    const userId = req.user.id;
 
-router.post("/", async(req,res,next)=>{
+    const year = new Date(start_date).getFullYear();
 
-try {
+    const lt = await pool.query(
+      "SELECT annual_allocation FROM leave_types WHERE id=$1",
+      [leave_type_id],
+    );
 
-const {
-leave_type_id,
-start_date,
-end_date,
-reason
-}=req.body;
+    if (!lt.rowCount) {
+      return res.status(400).json({
+        error: {
+          code: "BAD_TYPE",
+          message: "Unknown leave type",
+        },
+      });
+    }
 
-
-const userId =
-Number(req.body.user_id);
-
-
-const year =
-new Date(start_date).getFullYear();
-
-
-
-const lt =
-await pool.query(
-"SELECT annual_allocation FROM leave_types WHERE id=$1",
-[leave_type_id]
-);
-
-
-if(!lt.rowCount){
-
-return res.status(400).json({
-error:{
-code:"BAD_TYPE",
-message:"Unknown leave type"
-}
-});
-
-}
-
-
-
-const bal =
-await pool.query(
-`
-SELECT used_days
-FROM leave_balances
-WHERE user_id=$1
-AND leave_type_id=$2
-AND year=$3
-`,
-[
-userId,
-leave_type_id,
-year
-]
-);
-
-
-const used =
-bal.rowCount
-? Number(bal.rows[0].used_days)
-:0;
-
-
-
-if(
-used + dayCount(start_date,end_date)
->
-lt.rows[0].annual_allocation
-){
-
-return res.status(409).json({
-error:{
-code:"INSUFFICIENT_BALANCE",
-message:"Insufficient balance"
-}
-});
-
-}
-
-
-
-const ins =
-await pool.query(
-`
-INSERT INTO leave_requests
-(
-user_id,
-leave_type_id,
-start_date,
-end_date,
-reason
-)
-VALUES($1,$2,$3,$4,$5)
-RETURNING *
-`,
-[
-userId,
-leave_type_id,
-start_date,
-end_date,
-reason
-]
-);
-
-
-res.status(201)
-.json(ins.rows[0]);
-
-
-}catch(err){
-next(err);
-}
-
-});
-
-router.get("/", async(req,res,next)=>{
-
-try{
-
-const result =
-await pool.query(
-`
-SELECT *
-FROM leave_requests
-ORDER BY created_at DESC
-`
-);
-
-res.json(result.rows);
-
-
-}catch(err){
-next(err);
-}
-
-});
-router.patch("/:id", async (req, res, next) => {
-  const { action } = req.body;
-
-  if (action !== "approve" && action !== "reject" && action !== "cancel") {
-    return res.status(400).json({
-      error: {
-        code: "VALIDATION_ERROR",
-        message: "Invalid action",
-      },
-    });
-  }
-
-  try {
-    const result = await pool.query(
+    const bal = await pool.query(
       `
-      UPDATE leave_requests
-      SET 
-        status = $1,
-        decided_by = $2,
-        decided_at = now()
-      WHERE id = $3
-      AND status = 'PENDING'
+      SELECT used_days
+      FROM leave_balances
+      WHERE user_id=$1
+      AND leave_type_id=$2
+      AND year=$3
+      `,
+      [userId, leave_type_id, year],
+    );
+
+    const used = bal.rowCount
+      ? Number(bal.rows[0].used_days)
+      : 0;
+
+    if (
+      used + dayCount(start_date, end_date) >
+      lt.rows[0].annual_allocation
+    ) {
+      return res.status(409).json({
+        error: {
+          code: "INSUFFICIENT_BALANCE",
+          message: "Insufficient balance",
+        },
+      });
+    }
+
+    const ins = await pool.query(
+      `
+      INSERT INTO leave_requests
+      (
+        user_id,
+        leave_type_id,
+        start_date,
+        end_date,
+        reason
+      )
+      VALUES($1,$2,$3,$4,$5)
       RETURNING *
       `,
       [
-        action === "approve"
-          ? "APPROVED"
-          : action === "reject"
+        userId,
+        leave_type_id,
+        start_date,
+        end_date,
+        reason,
+      ],
+    );
+
+    res.status(201).json(ins.rows[0]);
+  }),
+);
+
+router.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const result =
+      req.user.role === "HR_ADMIN"
+        ? await pool.query(
+            "SELECT * FROM leave_requests ORDER BY created_at DESC",
+          )
+        : await pool.query(
+            "SELECT * FROM leave_requests WHERE user_id=$1 ORDER BY created_at DESC",
+            [req.user.id],
+          );
+
+    res.json(result.rows);
+  }),
+);
+
+router.patch(
+  "/:id",
+  asyncHandler(async (req, res) => {
+    const { action } = req.body;
+
+    if (!["approve", "reject", "cancel"].includes(action)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid action",
+        },
+      });
+    }
+
+    const q = await pool.query(
+      `
+      SELECT lr.user_id, u.manager_id
+      FROM leave_requests lr
+      JOIN users u ON u.id = lr.user_id
+      WHERE lr.id=$1
+      `,
+      [req.params.id],
+    );
+
+    if (!q.rowCount) {
+      return res.status(404).json({
+        error: {
+          code: "NOT_FOUND",
+          message: "No such request",
+        },
+      });
+    }
+
+    const { user_id, manager_id } = q.rows[0];
+
+    if (action === "cancel" && user_id !== req.user.id) {
+      return res.status(403).json({
+        error: {
+          code: "FORBIDDEN",
+          message: "Only the owner can cancel",
+        },
+      });
+    }
+
+    if (action !== "cancel") {
+      if (!["MANAGER", "HR_ADMIN"].includes(req.user.role)) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "Managers only",
+          },
+        });
+      }
+
+      if (
+        req.user.role === "MANAGER" &&
+        manager_id !== req.user.id
+      ) {
+        return res.status(403).json({
+          error: {
+            code: "FORBIDDEN",
+            message: "Not your report",
+          },
+        });
+      }
+    }
+
+    const status =
+      action === "approve"
+        ? "APPROVED"
+        : action === "reject"
           ? "REJECTED"
-          : "CANCELLED",
-        Number(req.body.decided_by),
+          : "CANCELLED";
+
+    const result = await pool.query(
+      `
+      UPDATE leave_requests
+      SET
+        status=$1,
+        decided_by=$2,
+        decided_at=now()
+      WHERE id=$3
+      AND status='PENDING'
+      RETURNING *
+      `,
+      [
+        status,
+        req.user.id,
         req.params.id,
-      ]
+      ],
     );
 
     if (!result.rowCount) {
@@ -193,12 +225,7 @@ router.patch("/:id", async (req, res, next) => {
     }
 
     res.json(result.rows[0]);
-
-  } catch (err) {
-    next(err);
-  }
-});
-
-
+  }),
+);
 
 module.exports = router;
