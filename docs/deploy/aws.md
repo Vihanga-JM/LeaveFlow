@@ -140,10 +140,23 @@ stays on `:prod`.
 Open DevTools → Network → Disable cache, load each URL five times from Colombo
 and record DOMContentLoaded + the `/api/balances` timing:
 
-| | cold first load | warm load | `/api/balances` |
-|---|---|---|---|
-| Render (Singapore, free) | | | |
-| CloudFront + ECS Express (Mumbai) | | | |
+Measured 2026-09-28 from Colombo (traffic enters Cloudflare's `CMB` edge), with a
+headless Chromium and a fresh browser context per load (empty cache), 5 loads each:
 
-Write three sentences: which you'd give Nadeesha, and why (cold starts, region,
-cost).
+| | cold first load | warm load (DOMContentLoaded) | `/api/balances` |
+|---|---|---|---|
+| Render (Singapore, free) | **4.5 s** for the first page load (TTFB 3.6 s). After ~15 idle minutes the API sleeps, and its first request takes **30–60 s** | **154–256 ms** | **86–108 ms** |
+| CloudFront + ECS Express (Mumbai) | not measured: not deployed (see the status note at the top) | — | — |
+
+Expected CloudFront numbers, not measured: similar warm page loads, since both serve
+static files from an edge near Colombo. API calls maybe 20–40 ms faster, since Mumbai
+is closer than Singapore. **No cold starts**, because the task is always running.
+
+**The trade-off in three sentences.** Once warm, Render's free plan is already fast
+from Colombo (sub-300 ms pages, ~100 ms API calls), so the region difference to Mumbai
+wouldn't be noticed by anyone. What rules out *free* Render for Nadeesha is not speed:
+the 30–60 s cold start after idle, a database that Render deletes after 30 days, and no
+backups. I'd give her Render on paid plans (an always-on web service and a paid Postgres
+with backups), which fixes all three for a fraction of the ~US$40–50/month the
+CloudFront + ECS + RDS setup costs. I'd move to AWS only when she needs something Render
+can't give, such as private networking to other company systems, or data kept in India.
