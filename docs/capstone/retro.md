@@ -48,6 +48,12 @@ then merge and delete. It's a one-line habit that would have avoided the whole #
 - ~~Deploy to Render, then run the incident drill there.~~ Done. Deployed 2026-09-28. The
   first hour produced a real incident instead of a drill: the login limit wasn't working
   behind Cloudflare, fixed in #27–#29 (`docs/ops/postmortems/2026-09-28-login-rate-limit-on-render.md`).
-- The restore drill still needs a paid Render database or AWS: Render's free Postgres has no backups.
+- ~~Restore drill on real data.~~ Done: `pg_dump` of Render production restored to a fresh
+  Postgres 18, verified through the API, RTO **18 s** (`docs/ops/restore-drill-log.md`).
+- ~~Staged incident on Render.~~ Done: the owner broke `JWT_SECRET` unannounced; diagnosed
+  with the runbook in ~2 min, fixed by restoring the saved value, and written up in
+  `docs/ops/postmortems/2026-09-28-staged-jwt-secret-on-render.md`.
+- The free Render database expires on **2026-10-28**, and Render deletes it 14 days later.
+  Give the demo before then, or upgrade it.
 - Give the client an error boundary, so a render crash shows a message instead of a blank page.
 - Keep a password-manager copy of `server/.env` values.
