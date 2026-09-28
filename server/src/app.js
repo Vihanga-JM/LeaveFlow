@@ -1,5 +1,6 @@
 const express = require("express");
 
+const { cors } = require("./middleware/cors");
 const { errorHandler } = require("./middleware/errors");
 const { httpLogger } = require("./middleware/logging");
 
@@ -11,6 +12,7 @@ const app = express();
 app.set("trust proxy", Number(process.env.TRUST_PROXY || 0));
 
 app.use(httpLogger);
+app.use(cors);
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {

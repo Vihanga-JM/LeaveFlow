@@ -1,7 +1,12 @@
+// Empty in dev, compose and E2E (same-origin /api, proxied). On Render it is the
+// API's own URL, baked in at build time, so the browser calls the API directly
+// and the login limit sees each visitor's IP instead of a proxy's.
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 export async function api(path, options = {}) {
   const token = localStorage.getItem('token');
 
-  const res = await fetch('/api' + path, {
+  const res = await fetch(API_BASE + '/api' + path, {
     method: options.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
