@@ -1,19 +1,22 @@
 const express = require("express");
-const morgan = require("morgan");
 
 const { errorHandler } = require("./middleware/errors");
+const { httpLogger } = require("./middleware/logging");
 
 const app = express();
 
-if (process.env.NODE_ENV !== "test") {
-  app.use(morgan("dev"));
-}
+// Behind nginx / CloudFront every request arrives from the proxy's IP. Tell
+// Express how many proxy hops to trust so req.ip (and the login rate limit)
+// sees the real client instead of lumping everyone together.
+app.set("trust proxy", Number(process.env.TRUST_PROXY || 0));
+
+app.use(httpLogger);
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
-    version: "0.5.0",
+    version: "0.6.0",
   });
 });
 
