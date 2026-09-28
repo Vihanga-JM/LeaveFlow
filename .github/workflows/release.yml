@@ -1,0 +1,39 @@
+name: Release
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR image names must be lowercase; the owner here is "Vihanga-JM".
+      - name: Lowercase owner
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER }}/leaveflow-api:${{ github.sha }}
+            ghcr.io/${{ env.OWNER }}/leaveflow-api:main
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./client
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER }}/leaveflow-web:${{ github.sha }}
+            ghcr.io/${{ env.OWNER }}/leaveflow-web:main

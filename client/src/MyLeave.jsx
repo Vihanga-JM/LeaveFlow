@@ -7,24 +7,30 @@ export default function MyLeave() {
   const [requests, setRequests] = useState([]);
   const [error, setError] = useState(null);
 
-  async function load() {
-    try {
-      setError(null);
+  function fetchAll() {
+    return Promise.all([api('/balances'), api('/leave-requests')]);
+  }
 
-      const [balanceData, requestData] = await Promise.all([
-        api('/balances'),
-        api('/leave-requests')
-      ]);
-
-      setBalances(balanceData);
-      setRequests(requestData);
-    } catch (err) {
-      setError(err.message);
-    }
+  function load() {
+    return fetchAll()
+      .then(([balanceData, requestData]) => {
+        setBalances(balanceData);
+        setRequests(requestData);
+        setError(null);
+      })
+      .catch((err) => setError(err.message));
   }
 
   useEffect(() => {
-    load();
+    let active = true;
+    fetchAll()
+      .then(([balanceData, requestData]) => {
+        if (!active) return;
+        setBalances(balanceData);
+        setRequests(requestData);
+      })
+      .catch((err) => active && setError(err.message));
+    return () => { active = false; };
   }, []);
 
   return (
