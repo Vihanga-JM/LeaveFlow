@@ -28,6 +28,8 @@ services:
         value: "1"                     # fallback only; Render's X-Forwarded-For has rotating hops
       - key: CLIENT_IP_HEADER
         value: cf-connecting-ip        # Cloudflare (in front of Render) overwrites this with the real client IP
+      - key: DEMO_USER_PASSWORD
+        generateValue: true            # replaces the public seed password; read it in the dashboard (Environment tab)
 
   - type: web
     name: leaveflow-web-vihangajm

@@ -17,8 +17,11 @@ Verify:
 curl https://leaveflow-web-vihangajm.onrender.com/api/health   # {"status":"ok",...}
 ```
 
-Log in as `ishara@ceylonroots.lk` / `password123`. **Change or remove the demo
-users before anyone real uses this** — the seed password is public in the repo.
+Log in as `ishara@ceylonroots.lk` with the value of `DEMO_USER_PASSWORD`
+(Render dashboard → `leaveflow-api-vihangajm` → **Environment** → reveal). Render
+generates it, and on every start the API replaces the public seed password
+`password123` on any account still using it (`src/db/rotateDemoPasswords.js`).
+Before real staff use this, replace the demo users with real accounts.
 
 Client IPs: Render sits behind Cloudflare, and its `X-Forwarded-For` is
 `client, cloudflare-edge, render-internal` with rotating hops, so `TRUST_PROXY`
