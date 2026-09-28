@@ -5,6 +5,8 @@ import Approvals from './Approvals';
 import AllRequests from './AllRequests';
 import Holidays from './Holidays';
 
+const ROLE_LABELS = { EMPLOYEE: 'Employee', MANAGER: 'Manager', HR_ADMIN: 'HR admin' };
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('leave');
@@ -27,48 +29,53 @@ export default function App() {
   const canApprove = user.role !== 'EMPLOYEE';
   const isHr = user.role === 'HR_ADMIN';
 
+  const tabs = [
+    { id: 'leave', label: 'My Leave', show: true },
+    { id: 'approvals', label: 'Approvals', show: canApprove },
+    { id: 'all', label: 'All Requests', show: isHr },
+    { id: 'holidays', label: 'Holidays', show: isHr },
+  ];
+
   return (
     <>
-      <nav>
-        <strong>LeaveFlow</strong> — {user.name}
+      <header className="topbar">
+        <div className="brand">LeaveFlow</div>
 
-        <button onClick={() => setPage('leave')}>
-          My Leave
-        </button>
+        <nav className="tabs">
+          {tabs.filter((t) => t.show).map((t) => (
+            <button
+              key={t.id}
+              className={`tab${page === t.id ? ' active' : ''}`}
+              aria-current={page === t.id ? 'page' : undefined}
+              onClick={() => setPage(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
 
-        {canApprove && (
-          <button onClick={() => setPage('approvals')}>
-            Approvals
+        <div className="user">
+          <span>{user.name}</span>
+          <span className="role">{ROLE_LABELS[user.role] || user.role}</span>
+          <button
+            className="btn-small"
+            onClick={() => {
+              localStorage.removeItem('token');
+              setUser(null);
+              setPage('leave');
+            }}
+          >
+            Sign out
           </button>
-        )}
+        </div>
+      </header>
 
-        {isHr && (
-          <button onClick={() => setPage('all')}>
-            All Requests
-          </button>
-        )}
-
-        {isHr && (
-          <button onClick={() => setPage('holidays')}>
-            Holidays
-          </button>
-        )}
-
-        <button
-          onClick={() => {
-            localStorage.removeItem('token');
-            setUser(null);
-            setPage('leave');
-          }}
-        >
-          Sign out
-        </button>
-      </nav>
-
-      {page === 'approvals' && <Approvals />}
-      {page === 'all' && <AllRequests />}
-      {page === 'holidays' && <Holidays />}
-      {page === 'leave' && <MyLeave />}
+      <div className="container">
+        {page === 'approvals' && <Approvals />}
+        {page === 'all' && <AllRequests />}
+        {page === 'holidays' && <Holidays />}
+        {page === 'leave' && <MyLeave />}
+      </div>
     </>
   );
 }

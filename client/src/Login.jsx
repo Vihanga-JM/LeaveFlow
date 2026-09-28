@@ -23,25 +23,33 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <form onSubmit={submit}>
-      <h1>LeaveFlow</h1>
+    <div className="login-page">
+      <form className="card login-card" onSubmit={submit}>
+        <h1>LeaveFlow</h1>
+        <p className="tagline">Sign in to manage your leave.</p>
 
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-      />
+        <input
+          type="email"
+          aria-label="Email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+        />
 
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-      />
+        <input
+          type="password"
+          aria-label="Password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+        />
 
-      <button type="submit">Sign in</button>
+        <button type="submit" className="btn-primary">Sign in</button>
 
-      {error && <p role="alert">{error}</p>}
-    </form>
+        {error && <p role="alert" className="alert">{error}</p>}
+      </form>
+    </div>
   );
 }

@@ -16,12 +16,12 @@ export default function TeamAbsences({ from, to, excludeUserId }) {
   if (absences === null) return null;
 
   if (absences.length === 0) {
-    return <small> · No one else is off</small>;
+    return <small className="absences">✓ No one else is off</small>;
   }
 
   return (
-    <small>
-      {' · Also off: '}
+    <small className="absences warn">
+      {'Also off: '}
       {absences
         .map((a) => `${a.employee_name} (${a.start_date} → ${a.end_date})`)
         .join(', ')}

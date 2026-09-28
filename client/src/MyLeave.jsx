@@ -37,34 +37,59 @@ export default function MyLeave() {
     <main>
       <h2>My Leave</h2>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="alert">{error}</p>}
 
-      {balances.map((b) => (
-        <p key={b.id}>
-          <strong>{b.name}</strong>:{' '}
-          {b.annual_allocation - b.used_days} of{' '}
-          {b.annual_allocation} days left
-          {Number(b.reserved_days) > 0 && ` (${Number(b.reserved_days)} reserved by pending requests)`}
-        </p>
-      ))}
+      <div className="balances">
+        {balances.map((b) => {
+          const left = b.annual_allocation - b.used_days;
+          const pct = b.annual_allocation ? Math.max(0, (left / b.annual_allocation) * 100) : 0;
+          return (
+            <p key={b.id} className="card balance">
+              <span className="balance-name">{b.name}</span>
+              <span className="balance-left">
+                <span className="big">{left}</span> of {b.annual_allocation} days left
+              </span>
+              {Number(b.reserved_days) > 0 && (
+                <span className="balance-reserved">
+                  ({Number(b.reserved_days)} reserved by pending requests)
+                </span>
+              )}
+              <span className="meter" aria-hidden="true">
+                <span style={{ width: `${pct}%` }} />
+              </span>
+            </p>
+          );
+        })}
+      </div>
 
       <ApplyLeaveForm onCreated={load} />
 
-      <h3>My Requests</h3>
+      <section className="section">
+        <h3>My Requests</h3>
 
-      {requests.map((r) => (
-  <p key={r.id}>
-    {r.start_date.slice(0, 10)} →{' '}
-    {r.end_date.slice(0, 10)}
-    {r.day_part !== 'FULL' && ` (${r.day_part} half day)`}
-    {' '}· {Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} — {r.reason}{' '}
-    <em>{r.status}</em>
+        {requests.length === 0 && <p className="empty">No requests yet.</p>}
 
-    {r.status === 'REJECTED' && r.decision_note && (
-      <> — {r.decision_note}</>
-    )}
-  </p>
-))}
+        <div className="list">
+          {requests.map((r) => (
+            <p key={r.id} className="row">
+              <span className="row-main">
+                <span className="row-title">
+                  {r.start_date.slice(0, 10)} → {r.end_date.slice(0, 10)}
+                  {r.day_part !== 'FULL' && ` (${r.day_part} half day)`}
+                </span>
+                <span className="row-sub">
+                  {Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} · {r.reason}
+                </span>
+              </span>
+              <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span>
+
+              {r.status === 'REJECTED' && r.decision_note && (
+                <span className="row-note">Manager&apos;s note: {r.decision_note}</span>
+              )}
+            </p>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
