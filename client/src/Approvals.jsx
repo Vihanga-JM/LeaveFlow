@@ -3,6 +3,7 @@ import { api } from './api';
 
 export default function Approvals() {
   const [pending, setPending] = useState([]);
+  const [notes, setNotes] = useState({});
   const [error, setError] = useState(null);
 
   async function load() {
@@ -23,7 +24,7 @@ export default function Approvals() {
     try {
       await api(`/leave-requests/${id}`, {
         method: 'PATCH',
-        body: { action }
+        body: { action, decision_note: notes[id] }
       });
 
       load();
@@ -39,7 +40,7 @@ export default function Approvals() {
       {error && <p role="alert">{error}</p>}
 
       {pending.length === 0 && (
-        <p>No pending requests.</p>
+        <p>No pending requests. Enjoy the quiet.</p>
       )}
 
       {pending.map((r) => (
@@ -52,7 +53,17 @@ export default function Approvals() {
             Approve
           </button>
 
-          <button onClick={() => decide(r.id, 'reject')}>
+          <input
+            aria-label={`Rejection note for ${r.employee_name}`}
+            placeholder="Reason for rejecting"
+            value={notes[r.id] || ''}
+            onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
+          />
+
+          <button
+            onClick={() => decide(r.id, 'reject')}
+            disabled={!notes[r.id]?.trim()}
+          >
             Reject
           </button>
         </p>

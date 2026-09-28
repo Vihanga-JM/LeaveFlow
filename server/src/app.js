@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const express = require("express");
 const morgan = require("morgan");
 
@@ -21,6 +19,7 @@ app.use("/api", require("./routes/auth"));
 app.use("/api/leave-requests", require("./routes/leaveRequests"));
 app.use("/api/balances", require("./routes/balances"));
 app.use("/api/team", require("./routes/team"));
+app.use("/api/admin", require("./routes/admin"));
 
 app.use((req, res) => {
   res.status(404).json({
@@ -32,11 +31,5 @@ app.use((req, res) => {
 });
 
 app.use(errorHandler);
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 module.exports = app;

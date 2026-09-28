@@ -1,2 +1,8 @@
 node_modules/
-leaveflow.db
+*.db
+.env
+.env.test
+dist/
+coverage/
+hello-check/
+lab0/

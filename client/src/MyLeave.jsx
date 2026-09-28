@@ -46,12 +46,16 @@ export default function MyLeave() {
       <h3>My Requests</h3>
 
       {requests.map((r) => (
-        <p key={r.id}>
-          {r.start_date.slice(0, 10)} →{' '}
-          {r.end_date.slice(0, 10)} — {r.reason}{' '}
-          <em>{r.status}</em>
-        </p>
-      ))}
+  <p key={r.id}>
+    {r.start_date.slice(0, 10)} →{' '}
+    {r.end_date.slice(0, 10)} — {r.reason}{' '}
+    <em>{r.status}</em>
+
+    {r.status === 'REJECTED' && r.decision_note && (
+      <> — {r.decision_note}</>
+    )}
+  </p>
+))}
     </main>
   );
 }

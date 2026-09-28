@@ -2,18 +2,13 @@ const express = require("express");
 const pool = require("../db/pool");
 const { requireAuth } = require("../middleware/auth");
 const { asyncHandler } = require("../middleware/errors");
-const {
-  validate,
-  required,
-  isDate,
-} = require("../middleware/validate");
+const { validate, required, isDate } = require("../middleware/validate");
+
+const { leaveDays } = require("../lib/leaveDays");
 
 const router = express.Router();
 
 router.use(requireAuth);
-
-const dayCount = (start, end) =>
-  (new Date(end) - new Date(start)) / 86400000;
 
 router.post(
   "/",
@@ -28,16 +23,11 @@ router.post(
     ],
   ]),
   asyncHandler(async (req, res) => {
-    const {
-      leave_type_id,
-      start_date,
-      end_date,
-      reason,
-    } = req.body;
+    const { leave_type_id, start_date, end_date, reason } = req.body;
 
     const userId = req.user.id;
 
-    const year = new Date(start_date).getFullYear();
+    const year = Number(start_date.slice(0, 4));
 
     const lt = await pool.query(
       "SELECT annual_allocation FROM leave_types WHERE id=$1",
@@ -64,18 +54,34 @@ router.post(
       [userId, leave_type_id, year],
     );
 
-    const used = bal.rowCount
-      ? Number(bal.rows[0].used_days)
-      : 0;
+    const used = bal.rowCount ? Number(bal.rows[0].used_days) : 0;
 
-    if (
-      used + dayCount(start_date, end_date) >
-      lt.rows[0].annual_allocation
-    ) {
+    if (used + leaveDays(start_date, end_date) > lt.rows[0].annual_allocation) {
       return res.status(409).json({
         error: {
           code: "INSUFFICIENT_BALANCE",
           message: "Insufficient balance",
+        },
+      });
+    }
+
+    const overlap = await pool.query(
+      `
+      SELECT 1
+      FROM leave_requests
+      WHERE user_id = $1
+      AND status IN ('PENDING', 'APPROVED')
+      AND start_date <= $3
+      AND end_date >= $2
+      `,
+      [userId, start_date, end_date],
+    );
+
+    if (overlap.rowCount) {
+      return res.status(409).json({
+        error: {
+          code: "OVERLAPPING_REQUEST",
+          message: "You already have a pending or approved request on these dates",
         },
       });
     }
@@ -93,13 +99,7 @@ router.post(
       VALUES($1,$2,$3,$4,$5)
       RETURNING *
       `,
-      [
-        userId,
-        leave_type_id,
-        start_date,
-        end_date,
-        reason,
-      ],
+      [userId, leave_type_id, start_date, end_date, reason],
     );
 
     res.status(201).json(ins.rows[0]);
@@ -126,8 +126,7 @@ router.get(
 router.patch(
   "/:id",
   asyncHandler(async (req, res) => {
-    const { action } = req.body;
-
+    const { action, decision_note } = req.body;
     if (!["approve", "reject", "cancel"].includes(action)) {
       return res.status(400).json({
         error: {
@@ -177,10 +176,7 @@ router.patch(
         });
       }
 
-      if (
-        req.user.role === "MANAGER" &&
-        manager_id !== req.user.id
-      ) {
+      if (req.user.role === "MANAGER" && manager_id !== req.user.id) {
         return res.status(403).json({
           error: {
             code: "FORBIDDEN",
@@ -189,7 +185,14 @@ router.patch(
         });
       }
     }
-
+    if (action === "reject" && !decision_note?.trim()) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION",
+          message: "decision_note is required when rejecting",
+        },
+      });
+    }
     const status =
       action === "approve"
         ? "APPROVED"
@@ -197,34 +200,69 @@ router.patch(
           ? "REJECTED"
           : "CANCELLED";
 
-    const result = await pool.query(
-      `
-      UPDATE leave_requests
-      SET
-        status=$1,
-        decided_by=$2,
-        decided_at=now()
-      WHERE id=$3
-      AND status='PENDING'
-      RETURNING *
-      `,
-      [
-        status,
-        req.user.id,
-        req.params.id,
-      ],
-    );
+    const client = await pool.connect();
 
-    if (!result.rowCount) {
-      return res.status(409).json({
-        error: {
-          code: "INVALID_STATE",
-          message: "Request is not pending",
-        },
-      });
+    try {
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        `
+        UPDATE leave_requests
+        SET
+          status = $1,
+          decided_by = $2,
+          decided_at = now(),
+          decision_note = $4
+        WHERE id = $3
+        AND status = 'PENDING'
+        RETURNING *
+        `,
+        [
+          status,
+          req.user.id,
+          req.params.id,
+          action === "reject" ? decision_note.trim() : null,
+        ],
+      );
+
+      if (!result.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({
+          error: {
+            code: "INVALID_STATE",
+            message: "Request is not pending",
+          },
+        });
+      }
+
+      const r = result.rows[0];
+
+      // Approval consumes balance: status and balance change together or not at all.
+      if (status === "APPROVED") {
+        await client.query(
+          `
+          INSERT INTO leave_balances (user_id, leave_type_id, year, used_days)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (user_id, leave_type_id, year)
+          DO UPDATE SET used_days = leave_balances.used_days + EXCLUDED.used_days
+          `,
+          [
+            r.user_id,
+            r.leave_type_id,
+            Number(r.start_date.slice(0, 4)),
+            leaveDays(r.start_date, r.end_date),
+          ],
+        );
+      }
+
+      await client.query("COMMIT");
+      res.json(r);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-
-    res.json(result.rows[0]);
   }),
 );
 
