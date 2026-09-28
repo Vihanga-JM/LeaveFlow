@@ -5,7 +5,9 @@ const { errorHandler } = require("./middleware/errors");
 
 const app = express();
 
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "test") {
+  app.use(morgan("dev"));
+}
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {

@@ -6,3 +6,5 @@ dist/
 coverage/
 hello-check/
 lab0/
+test-results/
+playwright-report/
