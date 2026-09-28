@@ -14,7 +14,7 @@ delete → 204.
 | The design doc argues real alternatives and commits to one | ✅ | `design.md`: `day_part` vs boolean, stored `days`, the holiday primary key |
 | The migration is reversible-aware | ✅ | Down paths and the "restore, don't down-script, after real half days" note in `005_half_day.sql` and `006_…sql` |
 | Day-math tests cover the edges | ✅ | `leaveDays.test.js` (half day on a poya/Saturday, Fri–Tue long weekend), `halfDay.test.js` (cancel gives 0.5 back) |
-| The PR is a reviewable size with what/why/how-to-test | ⚠️ partly | Split into #16 (docs), #17 (holidays), #18 (half days); #18 grew to ~500 lines once the review fixes landed |
+| The PR is a reviewable size with what/why/how-to-test | ✅ with one caveat | Split into #16 (docs), #17 (holidays), #18 (half days). Every PR has What / Why / How to test. #18 shows +698 / −481, but only ~255 added lines are application code; ~260 are tests, 47 are holiday data, and the rest is docs. Caveat: the `api.md` rewrite (+159 / −400) should have been its own PR |
 | CI green on the first push, or red diagnosed and fixed fast | ✅ | Every capstone PR was green before merge; the fire drill's red was diagnosed from the log in minutes |
 | Deployed through the pipeline, no hand edits on the server/DB | ✅ | Render Blueprint from `render.yaml`; every later change (#27–#29) went PR → CI → auto-deploy. One gap: the removed `/api` rewrite needs deleting in the dashboard |
 | Scope held; stretch ideas parked in the backlog | ✅ | Team calendar, email notifications and the audit log are listed as parked in `stories.md`; none were built |

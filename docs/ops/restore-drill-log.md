@@ -2,6 +2,11 @@
 
 A backup you have never restored doesn't exist. Run this monthly.
 
+> **Render's free Postgres has no backups, and it expires.** Free databases expire
+> 30 days after creation, and Render deletes them 14 days later with all their data.
+> On Render the only backup is one you take yourself: `pg_dump` over the External
+> Database URL. Upgrade the database to a paid plan before real data lives there.
+
 | Date | Environment | Snapshot | Restored to | Verified with | Measured RTO | Notes |
 |---|---|---|---|---|---|---|
 | 2026-09-28 | local compose (stand-in for RDS) | `pg_dump -Fc` of `leaveflow` (13 KB) | brand-new `postgres:16` container on :55432 | API pointed at the copy; Ishara's "Poson week" request present, status PENDING | **22 s** | drill instance deleted afterwards |
