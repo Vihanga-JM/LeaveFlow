@@ -75,7 +75,7 @@ export default function Holidays() {
       {holidays.map((h) => (
         <p key={h.holiday_date}>
           {h.holiday_date} — {h.name}{' '}
-          <button onClick={() => remove(h.holiday_date)} aria-label={`Delete ${h.holiday_date}`}>
+          <button onClick={() => remove(holidays[0].holiday_date)} aria-label={`Delete ${h.holiday_date}`}>
             Delete
           </button>
         </p>

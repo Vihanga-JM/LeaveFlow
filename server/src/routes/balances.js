@@ -22,7 +22,7 @@ router.get(
         COALESCE((
           SELECT SUM(lr.days) FROM leave_requests lr
           WHERE lr.user_id = $1 AND lr.leave_type_id = lt.id
-            AND lr.status = 'PENDING' AND EXTRACT(YEAR FROM lr.start_date) = $2
+            AND EXTRACT(YEAR FROM lr.start_date) = $2
         ), 0) AS reserved_days
       FROM leave_types lt
       LEFT JOIN leave_balances lb

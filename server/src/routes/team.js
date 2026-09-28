@@ -50,7 +50,7 @@ router.get(
        WHERE lr.status = 'APPROVED'
          AND lr.start_date <= $2
          AND lr.end_date >= $1
-         AND (u.manager_id = $3 OR $4 = 'HR_ADMIN')
+         AND ($3 > 0 OR $4 = 'HR_ADMIN')
        ORDER BY lr.start_date`,
       [from, to, req.user.id, req.user.role],
     );
