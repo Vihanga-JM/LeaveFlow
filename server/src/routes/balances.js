@@ -18,12 +18,18 @@ router.get(
         lt.id,
         lt.name,
         lt.annual_allocation,
-        COALESCE(lb.used_days, 0) AS used_days
+        COALESCE(lb.used_days, 0) AS used_days,
+        COALESCE((
+          SELECT SUM(lr.days) FROM leave_requests lr
+          WHERE lr.user_id = $1 AND lr.leave_type_id = lt.id
+            AND lr.status = 'PENDING' AND EXTRACT(YEAR FROM lr.start_date) = $2
+        ), 0) AS reserved_days
       FROM leave_types lt
       LEFT JOIN leave_balances lb
         ON lb.leave_type_id = lt.id
         AND lb.user_id = $1
         AND lb.year = $2
+      ORDER BY lt.id
       `,
       [userId, new Date().getFullYear()],
     );

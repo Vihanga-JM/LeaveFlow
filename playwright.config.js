@@ -34,7 +34,9 @@ module.exports = defineConfig({
       },
     },
     {
-      command: `npm run dev --prefix client -- --port ${WEB_PORT} --strictPort`,
+      // A real production build served by `vite preview` (which reuses the dev
+      // proxy config): no dev-server dependency optimisation or reloads mid-test.
+      command: `npm run build --prefix client && npm run preview --prefix client -- --port ${WEB_PORT} --strictPort`,
       port: WEB_PORT,
       reuseExistingServer: false,
       env: { API_URL: `http://localhost:${API_PORT}` },

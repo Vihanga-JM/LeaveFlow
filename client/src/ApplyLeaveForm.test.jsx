@@ -33,6 +33,27 @@ describe('ApplyLeaveForm', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/before start date/i);
   });
 
+  test('a half day pins the end date to the start date and sends day_part', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ id: 1 }),
+    });
+    const user = userEvent.setup();
+    render(<ApplyLeaveForm onCreated={() => {}} />);
+
+    await user.selectOptions(screen.getByLabelText(/duration/i), 'PM');
+    const end = screen.getByLabelText(/end date/i);
+    expect(end).toBeDisabled();
+
+    await user.type(screen.getByLabelText('Date', { exact: true }), '2026-10-09');
+    expect(end).toHaveValue('2026-10-09');
+
+    await user.click(screen.getByRole('button', { name: /apply/i }));
+    const body = JSON.parse(fetchSpy.mock.calls[0][1].body);
+    expect(body).toMatchObject({ day_part: 'PM', start_date: '2026-10-09', end_date: '2026-10-09' });
+  });
+
   test('shows the API error message when the server refuses', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,

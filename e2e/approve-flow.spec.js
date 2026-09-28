@@ -18,7 +18,7 @@ test('employee applies, manager approves, status and balance update', async ({ p
   await page.getByLabel('End date').fill('2026-03-13');   // Fri — 5 working days
   await page.getByLabel('Reason').fill('Family trip');
   await page.getByRole('button', { name: 'Apply' }).click();
-  await expect(page.getByText('PENDING')).toBeVisible();
+  await expect(page.getByText('PENDING', { exact: true })).toBeVisible();
   await signOut(page);
 
   await login(page, 'ruwan@ceylonroots.lk'); // Ishara's manager
@@ -30,6 +30,6 @@ test('employee applies, manager approves, status and balance update', async ({ p
   await signOut(page);
 
   await login(page, 'ishara@ceylonroots.lk');
-  await expect(page.getByText('APPROVED')).toBeVisible();
+  await expect(page.getByText('APPROVED', { exact: true })).toBeVisible();
   await expect(page.getByText('9 of 14 days left')).toBeVisible();
 });

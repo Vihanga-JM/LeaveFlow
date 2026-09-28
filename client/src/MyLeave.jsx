@@ -44,6 +44,7 @@ export default function MyLeave() {
           <strong>{b.name}</strong>:{' '}
           {b.annual_allocation - b.used_days} of{' '}
           {b.annual_allocation} days left
+          {Number(b.reserved_days) > 0 && ` (${Number(b.reserved_days)} reserved by pending requests)`}
         </p>
       ))}
 
@@ -54,7 +55,9 @@ export default function MyLeave() {
       {requests.map((r) => (
   <p key={r.id}>
     {r.start_date.slice(0, 10)} →{' '}
-    {r.end_date.slice(0, 10)} — {r.reason}{' '}
+    {r.end_date.slice(0, 10)}
+    {r.day_part !== 'FULL' && ` (${r.day_part} half day)`}
+    {' '}· {Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} — {r.reason}{' '}
     <em>{r.status}</em>
 
     {r.status === 'REJECTED' && r.decision_note && (
