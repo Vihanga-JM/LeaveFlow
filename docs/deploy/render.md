@@ -20,5 +20,11 @@ curl https://leaveflow-web-vihangajm.onrender.com/api/health   # {"status":"ok",
 Log in as `ishara@ceylonroots.lk` / `password123`. **Change or remove the demo
 users before anyone real uses this** — the seed password is public in the repo.
 
+Client IPs: Render sits behind Cloudflare, and its `X-Forwarded-For` is
+`client, cloudflare-edge, render-internal` with rotating hops, so `TRUST_PROXY`
+alone can't find the visitor. `CLIENT_IP_HEADER=cf-connecting-ip` makes the login
+limit key on the header Cloudflare overwrites. Check it: send 11 wrong logins and
+the `RateLimit` header's `r=` should count 9, 8, 7… down to a 429.
+
 Caveat: free web services spin down after ~15 idle minutes; the first request
 afterwards takes 30–60 s. Fine for a demo, not for Nadeesha — hence AWS.

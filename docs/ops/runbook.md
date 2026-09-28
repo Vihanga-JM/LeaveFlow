@@ -37,4 +37,4 @@ docker compose logs api --no-log-prefix | grep '"statusCode":5'
 | 500s everywhere | green | `relation … does not exist` | migrations didn't run against this database |
 | 500s, `sorry, too many clients already` | green | — | connections exhausted → `runbook-connections-exhausted.md` |
 | Nothing loads | red / timeout | nothing new | container crashed or failing health check → App Runner events |
-| 429 on login | green | `TOO_MANY_ATTEMPTS` | rate limit doing its job — or `TRUST_PROXY` wrong so all users share one IP |
+| 429 on login | green | `TOO_MANY_ATTEMPTS` | rate limit doing its job — or `TRUST_PROXY` / `CLIENT_IP_HEADER` wrong so all users share one IP (check the `RateLimit` response header: `r=` should count down for one client) |

@@ -25,7 +25,9 @@ services:
       - key: JWT_SECRET
         generateValue: true            # prod never shares dev's secret
       - key: TRUST_PROXY
-        value: "1"                     # behind Render's proxy: rate-limit by real client IP
+        value: "1"                     # fallback only; Render's X-Forwarded-For has rotating hops
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip        # Cloudflare (in front of Render) overwrites this with the real client IP
 
   - type: web
     name: leaveflow-web-vihangajm
