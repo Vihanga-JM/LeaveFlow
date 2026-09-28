@@ -9,9 +9,9 @@ Mitigate first, diagnose second.
 |---|------|-----------------|--------|-----|
 | 1 | **Symptom** — write down what's reported and when it started | | | |
 | 2 | **Health** — is the app up at all? | `curl localhost:8080/api/health` | `curl https://leaveflow-api-vihangajm.onrender.com/api/health` (first call after idle takes 30–60 s: cold start, not an outage) | `curl https://leave.ceylonroots.lk/api/health` |
-| 3 | **Logs** — errors? which route? since when? | `docker compose logs api --since 30m` | Dashboard → `leaveflow-api-vihangajm` → **Logs** (search e.g. `token rejected`); **Events** for deploys and restarts | `aws logs tail /aws/apprunner/leaveflow-api/<id>/application --since 30m --region ap-south-1` |
+| 3 | **Logs** — errors? which route? since when? | `docker compose logs api --since 30m` | Dashboard → `leaveflow-api-vihangajm` → **Logs** (search e.g. `token rejected`); **Events** for deploys and restarts | ECS → `leaveflow-api` → **Logs**, or `aws logs tail <service log group> --since 30m --region ap-south-1` |
 | 4 | **Database** — up? CPU? connections? | `docker compose exec db pg_isready -U leaveflow` | Dashboard → `leaveflow-db` → status and **Metrics** | RDS console → status, CPU, DatabaseConnections |
-| 5 | **Mitigate** — roll back to the last good image, or fix forward if trivial | `docker compose up -d` with the previous image/env | **Events** → an earlier deploy → **Rollback**; or fix forward through a PR (merges to `main` auto-deploy) | App Runner → Deploy the previous `:sha` tag |
+| 5 | **Mitigate** — roll back to the last good image, or fix forward if trivial | `docker compose up -d` with the previous image/env | **Events** → an earlier deploy → **Rollback**; or fix forward through a PR (merges to `main` auto-deploy) | ECS → service → update to the previous `:sha` image |
 | 6 | **Communicate** — tell Nadeesha what's broken, what you're doing, next update time | | | |
 | 7 | **Afterwards** — blameless post-mortem within 48 h | `docs/ops/postmortems/` | | |
 
@@ -40,5 +40,5 @@ docker compose logs api --no-log-prefix | grep '"statusCode":5'
 | Everyone logged out / every call 401 | green | `token rejected`, `invalid signature`, sharp start time | `JWT_SECRET` changed (see postmortem 2026-09-28) |
 | 500s everywhere | green | `relation … does not exist` | migrations didn't run against this database |
 | 500s, `sorry, too many clients already` | green | — | connections exhausted → `runbook-connections-exhausted.md` |
-| Nothing loads | red / timeout | nothing new | container crashed or failing health check → App Runner events |
+| Nothing loads | red / timeout | nothing new | container crashed or failing health check → Render **Events** / ECS service **Events** |
 | 429 on login | green | `TOO_MANY_ATTEMPTS` | rate limit doing its job — or `TRUST_PROXY` / `CLIENT_IP_HEADER` wrong so all users share one IP (check the `RateLimit` response header: `r=` should count down for one client) |
