@@ -1,3 +1,5 @@
 node_modules/
 leaveflow.db
 .env
+.env.test
+coverage/
