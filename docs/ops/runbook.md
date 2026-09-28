@@ -37,7 +37,7 @@ docker compose logs api --no-log-prefix | grep '"statusCode":5'
 
 | Symptom | Health | Logs show | Suspect |
 |---|---|---|---|
-| Everyone logged out / every call 401 | green | `token rejected`, `invalid signature`, sharp start time | `JWT_SECRET` changed (see postmortem 2026-09-28) |
+| Everyone logged out / every call 401 | green | `token rejected`, `invalid signature`, sharp start time | `JWT_SECRET` changed (see postmortems 2026-09-28-jwt-secret-rotation and 2026-09-28-staged-jwt-secret-on-render). Test from outside: an old token fails and a fresh login's token works. Restore the saved value; rotate only as planned maintenance, with a long random value |
 | 500s everywhere | green | `relation … does not exist` | migrations didn't run against this database |
 | 500s, `sorry, too many clients already` | green | — | connections exhausted → `runbook-connections-exhausted.md` |
 | Nothing loads | red / timeout | nothing new | container crashed or failing health check → Render **Events** / ECS service **Events** |

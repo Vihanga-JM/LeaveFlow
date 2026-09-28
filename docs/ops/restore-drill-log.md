@@ -10,6 +10,23 @@ A backup you have never restored doesn't exist. Run this monthly.
 | Date | Environment | Snapshot | Restored to | Verified with | Measured RTO | Notes |
 |---|---|---|---|---|---|---|
 | 2026-09-28 | local compose (stand-in for RDS) | `pg_dump -Fc` of `leaveflow` (13 KB) | brand-new `postgres:16` container on :55432 | API pointed at the copy; Ishara's "Poson week" request present, status PENDING | **22 s** | drill instance deleted afterwards |
+| 2026-09-28 | **Render production** (Postgres 18, Singapore) | `pg_dump -Fc` over the External Database URL (16 KB), run from `postgres:18` in Docker | brand-new `postgres:18` container on :55433 | local API on :4300 pointed at the copy; logged in with the prod password; Ishara's approved PM half day on 2026-11-20 present (0.5 days), Annual 0.5 used of 14, 25 holidays | **18 s** | drill container and API deleted afterwards; the dump is kept outside the repo as the only backup of the free database |
+
+## Render procedure (what was run)
+
+```bash
+# the External Database URL comes from Render → leaveflow-db → Connections; never commit it
+docker run --rm -v "$PWD:/w" postgres:18 pg_dump "$RENDER_DB_URL?sslmode=require" -Fc --no-owner --no-acl -f /w/prod.dump
+docker run -d --name leaveflow-restore-test -e POSTGRES_PASSWORD=restore -p 55433:5432 postgres:18
+docker exec leaveflow-restore-test createdb -U postgres leaveflow
+docker cp prod.dump leaveflow-restore-test:/tmp/prod.dump
+docker exec leaveflow-restore-test pg_restore -U postgres -d leaveflow --no-owner --no-acl /tmp/prod.dump
+PORT=4300 DATABASE_URL=postgres://postgres:restore@localhost:55433/leaveflow JWT_SECRET=x node src/server.js
+# log in, check a known APPROVED request, balances and holidays
+docker rm -f leaveflow-restore-test
+```
+
+`pg_dump` must be at least the server's major version: Render runs Postgres 18, so use the `postgres:18` image.
 
 ## Local procedure (what was run)
 
