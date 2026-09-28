@@ -11,6 +11,15 @@ docker compose down -v && docker compose up --build -d   # fresh seed: 14/7/7 fo
 
 Logins (password `password123`): Ishara (employee), Ruwan (her manager), Dilini (HR).
 
+**Demoing on Render instead** (https://leaveflow-web-vihangajm.onrender.com):
+- The password is the `DEMO_USER_PASSWORD` value (dashboard → `leaveflow-api-vihangajm`
+  → Environment). `password123` is rejected there.
+- Open the site a minute early to wake it from the free-plan sleep.
+- It isn't freshly seeded: the deploy smoke test left Ishara with an approved PM half
+  day on 2026-11-20, so she starts at **13.5**, not 14. In step 3, say "watch 13.5
+  become 13". A step already done in an earlier run (for example, the 2026-10-09 half
+  day) will be refused as an overlap, so pick a fresh date.
+
 ## 0:00–2:00 — the problem
 
 - "People took whole days for two-hour errands; Vesak poya was deducted from someone's

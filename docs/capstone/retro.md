@@ -16,7 +16,7 @@ delete → 204.
 | Day-math tests cover the edges | ✅ | `leaveDays.test.js` (half day on a poya/Saturday, Fri–Tue long weekend), `halfDay.test.js` (cancel gives 0.5 back) |
 | The PR is a reviewable size with what/why/how-to-test | ⚠️ partly | Split into #16 (docs), #17 (holidays), #18 (half days); #18 grew to ~500 lines once the review fixes landed |
 | CI green on the first push, or red diagnosed and fixed fast | ✅ | Every capstone PR was green before merge; the fire drill's red was diagnosed from the log in minutes |
-| Deployed through the pipeline, no hand edits on the server/DB | ⏳ | Release images build on every merge; Render deploy pending your account (`docs/deploy/render.md`) |
+| Deployed through the pipeline, no hand edits on the server/DB | ✅ | Render Blueprint from `render.yaml`; every later change (#27–#29) went PR → CI → auto-deploy. One gap: the removed `/api` rewrite needs deleting in the dashboard |
 | Scope held; stretch ideas parked in the backlog | ✅ | Team calendar, email notifications and the audit log are listed as parked in `stories.md`; none were built |
 | The demo survives an unrehearsed question | ⏳ | Prepared answers are in `demo-script.md`; needs a live audience |
 
@@ -45,7 +45,9 @@ then merge and delete. It's a one-line habit that would have avoided the whole #
 
 ## Follow-ups
 
-- Deploy to Render (pending the account), then run the incident drill there. Note that Render's
-  free Postgres has no backups, so the restore drill needs a paid instance or AWS.
+- ~~Deploy to Render, then run the incident drill there.~~ Done. Deployed 2026-09-28. The
+  first hour produced a real incident instead of a drill: the login limit wasn't working
+  behind Cloudflare, fixed in #27–#29 (`docs/ops/postmortems/2026-09-28-login-rate-limit-on-render.md`).
+- The restore drill still needs a paid Render database or AWS: Render's free Postgres has no backups.
 - Give the client an error boundary, so a render crash shows a message instead of a blank page.
 - Keep a password-manager copy of `server/.env` values.
