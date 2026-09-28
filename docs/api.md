@@ -61,7 +61,9 @@ One shape, everywhere:
 `401 BAD_CREDENTIALS` "Wrong email or password" — identical (body *and* timing) for an
 unknown email and a wrong password, so the endpoint doesn't reveal which emails exist.
 
-`429 TOO_MANY_ATTEMPTS` after 10 attempts per minute from one client IP.
+`429 TOO_MANY_ATTEMPTS` after 10 attempts per minute from one client IP, or after
+10 wrong passwords for one email within 15 minutes (from any IP; successful logins
+don't count).
 
 ## GET `/me`
 

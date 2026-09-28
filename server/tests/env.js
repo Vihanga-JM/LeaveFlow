@@ -3,3 +3,4 @@ require("dotenv").config({ path: ".env.test", override: true, quiet: true });
 
 // The suite logs in dozens of times a minute; security.test.js re-enables the real limit.
 process.env.LOGIN_RATE_LIMIT = process.env.LOGIN_RATE_LIMIT || "1000";
+process.env.ACCOUNT_LOGIN_LIMIT = process.env.ACCOUNT_LOGIN_LIMIT || "1000";
