@@ -5,15 +5,19 @@ with a workaround · **SEV3** annoying, fix this week.
 
 Mitigate first, diagnose second.
 
-| # | Step | Local (compose) | AWS |
-|---|------|-----------------|-----|
-| 1 | **Symptom** — write down what's reported and when it started | | |
-| 2 | **Health** — is the app up at all? | `curl localhost:8080/api/health` | `curl https://leave.ceylonroots.lk/api/health` |
-| 3 | **Logs** — errors? which route? since when? | `docker compose logs api --since 30m` | `aws logs tail /aws/apprunner/leaveflow-api/<id>/application --since 30m --region ap-south-1` |
-| 4 | **Database** — up? CPU? connections? | `docker compose exec db pg_isready -U leaveflow` | RDS console → status, CPU, DatabaseConnections |
-| 5 | **Mitigate** — roll back to the last good image, or fix forward if trivial | `docker compose up -d` with the previous image/env | App Runner → Deploy the previous `:sha` tag |
-| 6 | **Communicate** — tell Nadeesha what's broken, what you're doing, next update time | | |
-| 7 | **Afterwards** — blameless post-mortem within 48 h | `docs/ops/postmortems/` | |
+| # | Step | Local (compose) | Render | AWS |
+|---|------|-----------------|--------|-----|
+| 1 | **Symptom** — write down what's reported and when it started | | | |
+| 2 | **Health** — is the app up at all? | `curl localhost:8080/api/health` | `curl https://leaveflow-api-vihangajm.onrender.com/api/health` (first call after idle takes 30–60 s: cold start, not an outage) | `curl https://leave.ceylonroots.lk/api/health` |
+| 3 | **Logs** — errors? which route? since when? | `docker compose logs api --since 30m` | Dashboard → `leaveflow-api-vihangajm` → **Logs** (search e.g. `token rejected`); **Events** for deploys and restarts | `aws logs tail /aws/apprunner/leaveflow-api/<id>/application --since 30m --region ap-south-1` |
+| 4 | **Database** — up? CPU? connections? | `docker compose exec db pg_isready -U leaveflow` | Dashboard → `leaveflow-db` → status and **Metrics** | RDS console → status, CPU, DatabaseConnections |
+| 5 | **Mitigate** — roll back to the last good image, or fix forward if trivial | `docker compose up -d` with the previous image/env | **Events** → an earlier deploy → **Rollback**; or fix forward through a PR (merges to `main` auto-deploy) | App Runner → Deploy the previous `:sha` tag |
+| 6 | **Communicate** — tell Nadeesha what's broken, what you're doing, next update time | | | |
+| 7 | **Afterwards** — blameless post-mortem within 48 h | `docs/ops/postmortems/` | | |
+
+When the logs aren't available, response headers often are: `x-request-id` ties a
+response to its log line, and the login `RateLimit` header shows whether one client
+is being counted as one (see postmortem 2026-09-28-login-rate-limit-on-render).
 
 ## Useful log filters
 
