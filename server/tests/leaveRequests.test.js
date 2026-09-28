@@ -7,7 +7,7 @@ describe("POST /api/leave-requests", () => {
       start_date: "2026-03-09",
       end_date: "2026-03-13",
     });
-    expect(res.status).toBe(999);
+    expect(res.status).toBe(201);
     expect(res.body.status).toBe("PENDING");
   });
 
