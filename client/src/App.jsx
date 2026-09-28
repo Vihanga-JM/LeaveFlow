@@ -3,6 +3,7 @@ import Login from './Login';
 import MyLeave from './MyLeave';
 import Approvals from './Approvals';
 import AllRequests from './AllRequests';
+import Holidays from './Holidays';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -42,6 +43,12 @@ export default function App() {
           </button>
         )}
 
+        {isHr && (
+          <button onClick={() => setPage('holidays')}>
+            Holidays
+          </button>
+        )}
+
         <button
           onClick={() => {
             localStorage.removeItem('token');
@@ -54,6 +61,7 @@ export default function App() {
 
       {page === 'approvals' && <Approvals />}
       {page === 'all' && <AllRequests />}
+      {page === 'holidays' && <Holidays />}
       {page === 'leave' && <MyLeave />}
     </>
   );
