@@ -10,7 +10,7 @@ databases:
 
 services:
   - type: web
-    name: leaveflow-api
+    name: leaveflow-api-vihangajm   # becomes the public URL; must be unique on Render
     runtime: docker
     region: singapore
     plan: free               # spins down after ~15 idle minutes; first request cold-starts
@@ -24,9 +24,11 @@ services:
           property: connectionString   # the internal URL — private network, no TLS needed
       - key: JWT_SECRET
         generateValue: true            # prod never shares dev's secret
+      - key: TRUST_PROXY
+        value: "1"                     # behind Render's proxy: rate-limit by real client IP
 
   - type: web
-    name: leaveflow-web
+    name: leaveflow-web-vihangajm
     runtime: static
     rootDir: client
     buildCommand: npm ci && npm run build
@@ -34,7 +36,7 @@ services:
     routes:                  # order matters: /api first, then the SPA fallback
       - type: rewrite
         source: /api/*
-        destination: https://leaveflow-api.onrender.com/api/*
+        destination: https://leaveflow-api-vihangajm.onrender.com/api/*
       - type: rewrite
         source: /*
         destination: /index.html
