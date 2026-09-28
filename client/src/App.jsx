@@ -10,7 +10,12 @@ export default function App() {
   const [page, setPage] = useState('leave');
 
   useEffect(() => {
-    const onLogout = () => setUser(null);
+    // Reset the page too, so the next person to log in on this browser
+    // doesn't land on the previous user's HR/manager screen.
+    const onLogout = () => {
+      setUser(null);
+      setPage('leave');
+    };
     window.addEventListener('leaveflow:logout', onLogout);
     return () => window.removeEventListener('leaveflow:logout', onLogout);
   }, []);
@@ -53,6 +58,7 @@ export default function App() {
           onClick={() => {
             localStorage.removeItem('token');
             setUser(null);
+            setPage('leave');
           }}
         >
           Sign out

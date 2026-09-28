@@ -4,6 +4,7 @@ import { api } from './api';
 export default function ApplyLeaveForm({ onCreated }) {
   const [form, setForm] = useState({
     leave_type_id: 1,
+    day_part: 'FULL',
     start_date: '',
     end_date: '',
     reason: ''
@@ -11,13 +12,14 @@ export default function ApplyLeaveForm({ onCreated }) {
 
   const [error, setError] = useState(null);
 
+  const isHalfDay = form.day_part !== 'FULL';
+
   const update = (key) => (e) => {
-    setForm({
-      ...form,
-      [key]: key === 'leave_type_id'
-        ? Number(e.target.value)
-        : e.target.value
-    });
+    const value = key === 'leave_type_id' ? Number(e.target.value) : e.target.value;
+    const next = { ...form, [key]: value };
+    // A half day is a single date: keep the end date pinned to the start date.
+    if (next.day_part !== 'FULL') next.end_date = next.start_date;
+    setForm(next);
   };
 
   const datesValid =
@@ -39,7 +41,7 @@ export default function ApplyLeaveForm({ onCreated }) {
       });
 
       setError(null);
-      setForm({ ...form, start_date: '', end_date: '', reason: '' });
+      setForm({ ...form, day_part: 'FULL', start_date: '', end_date: '', reason: '' });
       onCreated();
     } catch (err) {
       setError(err.message);
@@ -63,7 +65,19 @@ export default function ApplyLeaveForm({ onCreated }) {
       </label>
 
       <label>
-        Start date
+        Duration
+        <select
+          value={form.day_part}
+          onChange={update('day_part')}
+        >
+          <option value="FULL">Full day(s)</option>
+          <option value="AM">Morning half day</option>
+          <option value="PM">Afternoon half day</option>
+        </select>
+      </label>
+
+      <label>
+        {isHalfDay ? 'Date' : 'Start date'}
         <input
           type="date"
           value={form.start_date}
@@ -77,6 +91,7 @@ export default function ApplyLeaveForm({ onCreated }) {
           type="date"
           value={form.end_date}
           onChange={update('end_date')}
+          disabled={isHalfDay}
         />
       </label>
 

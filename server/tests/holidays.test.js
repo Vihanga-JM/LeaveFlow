@@ -17,7 +17,7 @@ describe("GET /api/holidays", () => {
     const ishara = await loginAs(ISHARA);
     const res = await request(app).get("/api/holidays?year=2026").set("Authorization", `Bearer ${ishara}`);
     expect(res.status).toBe(200);
-    expect(res.body).toContainEqual({ holiday_date: "2026-05-01", name: "Vesak Full Moon Poya Day / May Day" });
+    expect(res.body).toContainEqual({ holiday_date: "2026-05-01", name: "Vesak Full Moon Poya Day / International Labour Day" });
   });
 
   test("requires login", async () => {

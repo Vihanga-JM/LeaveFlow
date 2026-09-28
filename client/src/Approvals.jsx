@@ -51,7 +51,9 @@ export default function Approvals() {
         <p key={r.id}>
           <strong>{r.employee_name}</strong> —{' '}
           {r.start_date.slice(0, 10)} to{' '}
-          {r.end_date.slice(0, 10)} ({r.reason})
+          {r.end_date.slice(0, 10)}
+          {r.day_part !== 'FULL' && <strong> {r.day_part} half day</strong>}
+          {' '}· {Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} ({r.reason})
           <TeamAbsences
             from={r.start_date.slice(0, 10)}
             to={r.end_date.slice(0, 10)}
