@@ -1,0 +1,40 @@
+# Runbook — default incident response
+
+Severity: **SEV1** down or data loss (drop everything) · **SEV2** a feature broken
+with a workaround · **SEV3** annoying, fix this week.
+
+Mitigate first, diagnose second.
+
+| # | Step | Local (compose) | AWS |
+|---|------|-----------------|-----|
+| 1 | **Symptom** — write down what's reported and when it started | | |
+| 2 | **Health** — is the app up at all? | `curl localhost:8080/api/health` | `curl https://leave.ceylonroots.lk/api/health` |
+| 3 | **Logs** — errors? which route? since when? | `docker compose logs api --since 30m` | `aws logs tail /aws/apprunner/leaveflow-api/<id>/application --since 30m --region ap-south-1` |
+| 4 | **Database** — up? CPU? connections? | `docker compose exec db pg_isready -U leaveflow` | RDS console → status, CPU, DatabaseConnections |
+| 5 | **Mitigate** — roll back to the last good image, or fix forward if trivial | `docker compose up -d` with the previous image/env | App Runner → Deploy the previous `:sha` tag |
+| 6 | **Communicate** — tell Nadeesha what's broken, what you're doing, next update time | | |
+| 7 | **Afterwards** — blameless post-mortem within 48 h | `docs/ops/postmortems/` | |
+
+## Useful log filters
+
+Logs are JSON lines (pino), one per request, each with a `req.id` that is also
+returned to the client as the `x-request-id` header.
+
+```bash
+# every 401, last 15 minutes (AWS)
+aws logs tail <group> --since 15m --filter-pattern '{ $.res.statusCode = 401 }'
+# why tokens are being rejected: "invalid signature" = secret mismatch, "jwt expired" = normal
+aws logs tail <group> --since 15m --filter-pattern '{ $.msg = "token rejected" }'
+# locally
+docker compose logs api --no-log-prefix | grep '"statusCode":5'
+```
+
+## Symptom → first suspect
+
+| Symptom | Health | Logs show | Suspect |
+|---|---|---|---|
+| Everyone logged out / every call 401 | green | `token rejected`, `invalid signature`, sharp start time | `JWT_SECRET` changed (see postmortem 2026-09-28) |
+| 500s everywhere | green | `relation … does not exist` | migrations didn't run against this database |
+| 500s, `sorry, too many clients already` | green | — | connections exhausted → `runbook-connections-exhausted.md` |
+| Nothing loads | red / timeout | nothing new | container crashed or failing health check → App Runner events |
+| 429 on login | green | `TOO_MANY_ATTEMPTS` | rate limit doing its job — or `TRUST_PROXY` wrong so all users share one IP |
