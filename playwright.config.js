@@ -26,6 +26,7 @@ module.exports = defineConfig({
     {
       command: 'npm run start --prefix server',
       port: API_PORT,
+      timeout: 180_000,
       reuseExistingServer: false,
       env: {
         PORT: String(API_PORT),
@@ -38,6 +39,7 @@ module.exports = defineConfig({
       // proxy config): no dev-server dependency optimisation or reloads mid-test.
       command: `npm run build --prefix client && npm run preview --prefix client -- --port ${WEB_PORT} --strictPort`,
       port: WEB_PORT,
+      timeout: 180_000, // builds the client first
       reuseExistingServer: false,
       env: { API_URL: `http://localhost:${API_PORT}` },
     },
