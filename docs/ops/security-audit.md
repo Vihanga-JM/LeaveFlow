@@ -12,7 +12,7 @@ not assumed; the evidence column says how.
 | **Login brute force** | `express-rate-limit`: 10 attempts/min per client (keyed on `CLIENT_IP_HEADER` behind a CDN, else `trust proxy`) plus 10 failed attempts/15 min per account | `security.test.js`, `rateLimits.test.js`; through nginx: attempts 1–10 → 401, 11th → 429. On Render, `TRUST_PROXY=1` alone spread one client over rotating Cloudflare/Render hops and never hit 429 — fixed by keying on `cf-connecting-ip` | ✅ |
 | **User enumeration** | same 401 body for unknown email and wrong password; dummy bcrypt compare for unknown emails | before: 120 ms vs 4 ms; after: 142 ms vs 91 ms (both bcrypt-bound, within noise) | ✅ fixed (BUG-006) |
 | **Error detail leakage** | `errorHandler` returns "Something went wrong" for 500s, logs the detail server-side | `errors.test.js` | ✅ |
-| **Transport security** | HTTPS at Render/CloudFront; `DATABASE_SSL` + RDS CA bundle for the DB | `DATABASE_SSL=true` against a non-TLS server is refused (verified); prod not yet deployed | ⏳ verify on AWS |
+| **Transport security** | HTTPS at Render/CloudFront; `DATABASE_SSL` + RDS CA bundle for the DB | `DATABASE_SSL=true` against a non-TLS server is refused (verified). Render, checked 2026-09-28: both hosts serve HTTPS over TLS 1.3 with `Strict-Transport-Security: max-age=315360000; includeSubdomains; preload`. The API reaches the database over Render's private network | ✅ on Render (AWS: verify if ever deployed) |
 
 ## Findings to act on
 
