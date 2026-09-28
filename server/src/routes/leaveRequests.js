@@ -69,67 +69,80 @@ router.post(
       });
     }
 
-    // Overlap: any PENDING/APPROVED request on these dates, except that a
-    // morning and an afternoon half day on the same date can coexist.
-    const overlap = await pool.query(
-      `
-      SELECT 1
-      FROM leave_requests
-      WHERE user_id = $1
-      AND status IN ('PENDING', 'APPROVED')
-      AND start_date <= $3
-      AND end_date >= $2
-      AND NOT (day_part <> 'FULL' AND $4 <> 'FULL' AND day_part <> $4)
-      `,
-      [userId, start_date, end_date, dayPart],
-    );
+    // Check-then-insert must be atomic per user, otherwise a double-click (or
+    // two tabs) can pass the overlap and balance checks twice before either
+    // insert lands. An advisory lock keyed on the user id serialises one
+    // user's submissions until COMMIT; different users never wait on each other.
+    const client = await pool.connect();
+    const refuse = async (status, code, message) => {
+      await client.query("ROLLBACK");
+      return res.status(status).json({ error: { code, message } });
+    };
 
-    if (overlap.rowCount) {
-      return res.status(409).json({
-        error: {
-          code: "OVERLAPPING_REQUEST",
-          message: "You already have a pending or approved request on these dates",
-        },
-      });
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1)", [userId]);
+
+      // Overlap: any PENDING/APPROVED request on these dates, except that a
+      // morning and an afternoon half day on the same date can coexist.
+      const overlap = await client.query(
+        `
+        SELECT 1
+        FROM leave_requests
+        WHERE user_id = $1
+        AND status IN ('PENDING', 'APPROVED')
+        AND start_date <= $3
+        AND end_date >= $2
+        AND NOT (day_part <> 'FULL' AND $4 <> 'FULL' AND day_part <> $4)
+        `,
+        [userId, start_date, end_date, dayPart],
+      );
+
+      if (overlap.rowCount) {
+        return await refuse(409, "OVERLAPPING_REQUEST",
+          "You already have a pending or approved request on these dates");
+      }
+
+      // Available = allocation − used (approved) − reserved (pending).
+      const bal = await client.query(
+        `
+        SELECT
+          COALESCE((SELECT used_days FROM leave_balances
+                    WHERE user_id = $1 AND leave_type_id = $2 AND year = $3), 0) AS used,
+          COALESCE((SELECT SUM(days) FROM leave_requests
+                    WHERE user_id = $1 AND leave_type_id = $2 AND status = 'PENDING'
+                    AND EXTRACT(YEAR FROM start_date) = $3), 0) AS reserved
+        `,
+        [userId, leave_type_id, year],
+      );
+
+      const used = Number(bal.rows[0].used);
+      const reserved = Number(bal.rows[0].reserved);
+      const allocation = lt.rows[0].annual_allocation;
+
+      if (used + reserved + days > allocation) {
+        return await refuse(409, "INSUFFICIENT_BALANCE",
+          `Only ${allocation - used - reserved} day(s) of this type left this year`);
+      }
+
+      const ins = await client.query(
+        `
+        INSERT INTO leave_requests
+          (user_id, leave_type_id, start_date, end_date, reason, day_part, days)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING *
+        `,
+        [userId, leave_type_id, start_date, end_date, reason, dayPart, days],
+      );
+
+      await client.query("COMMIT");
+      res.status(201).json(ins.rows[0]);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-
-    // Available = allocation − used (approved) − reserved (pending).
-    const bal = await pool.query(
-      `
-      SELECT
-        COALESCE((SELECT used_days FROM leave_balances
-                  WHERE user_id = $1 AND leave_type_id = $2 AND year = $3), 0) AS used,
-        COALESCE((SELECT SUM(days) FROM leave_requests
-                  WHERE user_id = $1 AND leave_type_id = $2 AND status = 'PENDING'
-                  AND EXTRACT(YEAR FROM start_date) = $3), 0) AS reserved
-      `,
-      [userId, leave_type_id, year],
-    );
-
-    const used = Number(bal.rows[0].used);
-    const reserved = Number(bal.rows[0].reserved);
-    const allocation = lt.rows[0].annual_allocation;
-
-    if (used + reserved + days > allocation) {
-      return res.status(409).json({
-        error: {
-          code: "INSUFFICIENT_BALANCE",
-          message: `Only ${allocation - used - reserved} day(s) of this type left this year`,
-        },
-      });
-    }
-
-    const ins = await pool.query(
-      `
-      INSERT INTO leave_requests
-        (user_id, leave_type_id, start_date, end_date, reason, day_part, days)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *
-      `,
-      [userId, leave_type_id, start_date, end_date, reason, dayPart, days],
-    );
-
-    res.status(201).json(ins.rows[0]);
   }),
 );
 
