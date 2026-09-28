@@ -41,44 +41,54 @@ export default function Approvals() {
     <main>
       <h2>Approvals</h2>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="alert">{error}</p>}
 
       {pending.length === 0 && (
-        <p>No pending requests. Enjoy the quiet.</p>
+        <p className="empty">No pending requests. Enjoy the quiet.</p>
       )}
 
-      {pending.map((r) => (
-        <p key={r.id}>
-          <strong>{r.employee_name}</strong> —{' '}
-          {r.start_date.slice(0, 10)} to{' '}
-          {r.end_date.slice(0, 10)}
-          {r.day_part !== 'FULL' && <strong> {r.day_part} half day</strong>}
-          {' '}· {Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} ({r.reason})
-          <TeamAbsences
-            from={r.start_date.slice(0, 10)}
-            to={r.end_date.slice(0, 10)}
-            excludeUserId={r.user_id}
-          />{' '}
+      <div className="list">
+        {pending.map((r) => (
+          <p key={r.id} className="row approval">
+            <span className="row-main">
+              <span className="row-title">
+                {r.employee_name}
+                {r.day_part !== 'FULL' && <span className="chip">{r.day_part} half day</span>}
+              </span>
+              <span className="row-sub">
+                {r.start_date.slice(0, 10)} to {r.end_date.slice(0, 10)}
+                {' · '}{Number(r.days)} day{Number(r.days) === 1 ? '' : 's'} · {r.reason}
+              </span>
+              <TeamAbsences
+                from={r.start_date.slice(0, 10)}
+                to={r.end_date.slice(0, 10)}
+                excludeUserId={r.user_id}
+              />
+            </span>
 
-          <button onClick={() => decide(r.id, 'approve')}>
-            Approve
-          </button>
+            <span className="actions">
+              <button className="btn-primary" onClick={() => decide(r.id, 'approve')}>
+                Approve
+              </button>
 
-          <input
-            aria-label={`Rejection note for ${r.employee_name}`}
-            placeholder="Reason for rejecting"
-            value={notes[r.id] || ''}
-            onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
-          />
+              <input
+                aria-label={`Rejection note for ${r.employee_name}`}
+                placeholder="Reason for rejecting"
+                value={notes[r.id] || ''}
+                onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })}
+              />
 
-          <button
-            onClick={() => decide(r.id, 'reject')}
-            disabled={!notes[r.id]?.trim()}
-          >
-            Reject
-          </button>
-        </p>
-      ))}
+              <button
+                className="btn-danger"
+                onClick={() => decide(r.id, 'reject')}
+                disabled={!notes[r.id]?.trim()}
+              >
+                Reject
+              </button>
+            </span>
+          </p>
+        ))}
+      </div>
     </main>
   );
 }

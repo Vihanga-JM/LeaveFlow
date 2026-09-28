@@ -49,10 +49,10 @@ export default function Holidays() {
     <main>
       <h2>Public holidays {year}</h2>
 
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="alert">{error}</p>}
 
-      <form onSubmit={add}>
-        <label>
+      <form className="card inline-form" onSubmit={add}>
+        <label className="field">
           Date
           <input
             type="date"
@@ -60,26 +60,48 @@ export default function Holidays() {
             onChange={(e) => setForm({ ...form, holiday_date: e.target.value })}
           />
         </label>
-        <label>
+        <label className="field">
           Name
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </label>
-        <button type="submit" disabled={!form.holiday_date || !form.name.trim()}>
+        <button type="submit" className="btn-primary" disabled={!form.holiday_date || !form.name.trim()}>
           Add holiday
         </button>
       </form>
 
-      {holidays.map((h) => (
-        <p key={h.holiday_date}>
-          {h.holiday_date} — {h.name}{' '}
-          <button onClick={() => remove(h.holiday_date)} aria-label={`Delete ${h.holiday_date}`}>
-            Delete
-          </button>
-        </p>
-      ))}
+      {holidays.length > 0 && (
+        <div className="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Holiday</th>
+                <th className="right"><span className="muted">{holidays.length} days</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {holidays.map((h) => (
+                <tr key={h.holiday_date}>
+                  <td>{h.holiday_date}</td>
+                  <td className="wrap">{h.name}</td>
+                  <td className="right">
+                    <button
+                      className="btn-danger btn-small"
+                      onClick={() => remove(h.holiday_date)}
+                      aria-label={`Delete ${h.holiday_date}`}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }

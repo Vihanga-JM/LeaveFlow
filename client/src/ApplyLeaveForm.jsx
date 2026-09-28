@@ -49,10 +49,10 @@ export default function ApplyLeaveForm({ onCreated }) {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form className="card form-grid" onSubmit={submit}>
       <h3>Apply for Leave</h3>
 
-      <label>
+      <label className="field">
         Leave type
         <select
           value={form.leave_type_id}
@@ -64,7 +64,7 @@ export default function ApplyLeaveForm({ onCreated }) {
         </select>
       </label>
 
-      <label>
+      <label className="field">
         Duration
         <select
           value={form.day_part}
@@ -76,7 +76,7 @@ export default function ApplyLeaveForm({ onCreated }) {
         </select>
       </label>
 
-      <label>
+      <label className="field">
         {isHalfDay ? 'Date' : 'Start date'}
         <input
           type="date"
@@ -85,7 +85,7 @@ export default function ApplyLeaveForm({ onCreated }) {
         />
       </label>
 
-      <label>
+      <label className="field">
         End date
         <input
           type="date"
@@ -95,7 +95,7 @@ export default function ApplyLeaveForm({ onCreated }) {
         />
       </label>
 
-      <label>
+      <label className="field span-2">
         Reason
         <input
           value={form.reason}
@@ -103,12 +103,14 @@ export default function ApplyLeaveForm({ onCreated }) {
         />
       </label>
 
-      <button type="submit" disabled={!datesValid}>Apply</button>
-
       {form.start_date && form.end_date && !datesValid && (
-        <p role="alert">End date is before start date</p>
+        <p role="alert" className="alert">End date is before start date</p>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert" className="alert">{error}</p>}
+
+      <div className="form-actions">
+        <button type="submit" className="btn-primary" disabled={!datesValid}>Apply</button>
+      </div>
     </form>
   );
 }
