@@ -1,20 +1,31 @@
 # Capstone — stories and acceptance criteria
 
 Source: Nadeesha's email after the management meeting (half-day leave; public
-holidays must never reduce a balance). Status: **draft for Gate 1** — the
-answers to the open questions below are my proposals until the mentor, answering
-as Nadeesha, signs them off.
+holidays must never reduce a balance). Status: **Gate 1 approved** — all six
+answers below were accepted as written on 2026-09-28 by Vihanga De Silva,
+answering as Nadeesha (no mentor assigned for this capstone).
 
-## Open questions and proposed answers
+## Open questions and agreed answers
+Q1  - Can a half day be attached to a multi-day request (e.g. Mon–Wed + Thu morning)? 
+**No.** A half day is its own single-date request. Two requests cover the Mon–Thu-morning case. Keeps the day math and the UI simple. 
 
-| # | Question | Proposed answer |
-|---|---|---|
-| Q1 | Can a half day be attached to a multi-day request (e.g. Mon–Wed + Thu morning)? | **No.** A half day is its own single-date request. Two requests cover the Mon–Thu-morning case. Keeps the day math and the UI simple. |
-| Q2 | Can someone take the morning *and* the afternoon of the same day as two requests? | Yes — AM and PM on the same date don't overlap. Two AMs on the same date do. |
-| Q3 | Who maintains the holiday list? | **HR_ADMIN, in the app**, per year — no developer needed. The 2026 list is seeded once. |
-| Q4 | A half day on a public holiday or weekend? | Refused: it would deduct nothing, so it's almost certainly a mistake. Same for a full-day request that contains no working day. |
-| Q5 | If HR adds a holiday *after* a request was made, does the request change? | No. A request stores its day count when it's submitted; HR can reject and ask for a re-submit. (Changing approved balances retroactively would surprise people.) |
-| Q6 | Should pending days count against the balance? | Yes, as **reserved**: shown separately and used in the "enough days left?" check, released on cancel/reject. (This is the US-3 criterion from Phase 1.) |
+Q2 - Can someone take the morning *and* the afternoon of the same day as two requests?
+Yes — AM and PM on the same date don't overlap. Two AMs on the same date do. 
+
+Q3 - Who maintains the holiday list?
+
+**HR_ADMIN, in the app**, per year — no developer needed. The 2026 list is seeded once.
+
+Q4 - A half day on a public holiday or weekend? 
+Refused: it would deduct nothing, so it's almost certainly a mistake. Same for a full-day request that contains no working day. 
+
+Q5 - If HR adds a holiday *after* a request was made, does the request change?
+
+No. A request stores its day count when it's submitted; HR can reject and ask for a re-submit. (Changing approved balances retroactively would surprise people.)
+
+Q6 - Should pending days count against the balance? 
+
+Yes, as **reserved**: shown separately and used in the "enough days left?" check, released on cancel/reject. (This is the US-3 criterion from Phase 1.) 
 
 ## Stories
 
