@@ -1,0 +1,44 @@
+# External uptime check for the live Render deploy. It runs on GitHub's servers,
+# outside Render, so it sees what users see. A failed run emails the repo owner
+# (GitHub's default notification for failed scheduled workflows).
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # GitHub's minimum; runs can start a few minutes late under load
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Override the API base URL (e.g. a bad host, to test the alert)"
+        required: false
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      API: ${{ inputs.api_url || 'https://leaveflow-api-vihangajm.onrender.com' }}
+      WEB: https://leaveflow-web-vihangajm.onrender.com
+    steps:
+      - name: API health
+        # The free plan sleeps after ~15 idle minutes; a cold start takes 30-60 s,
+        # so allow 90 s and retry once before calling it down.
+        run: |
+          for attempt in 1 2; do
+            body=$(curl -fsS --max-time 90 "$API/api/health") && break
+            echo "attempt $attempt failed"; body=""; sleep 10
+          done
+          echo "response: $body"
+          echo "$body" | grep -q '"status":"ok"' || { echo "::error::API health check failed at $API"; exit 1; }
+
+      - name: Website loads
+        run: |
+          code=$(curl -s -o page.html -w '%{http_code}' --max-time 90 "$WEB/")
+          echo "HTTP $code"
+          [ "$code" = 200 ] && grep -q '<div id="root">' page.html || { echo "::error::Website check failed ($code)"; exit 1; }

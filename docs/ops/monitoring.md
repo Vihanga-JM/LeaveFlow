@@ -40,9 +40,28 @@ wrong host for a minute). An alarm you've never seen fire is imaginary.
 Checks from *outside* AWS catch what AWS can't see about itself (DNS, CloudFront,
 certificate expiry).
 
-UptimeRobot (free): New monitor → HTTP(s) → `https://leave.ceylonroots.lk/api/health`,
-interval 5 min, keyword `"status":"ok"`; alert contact = the same email as the SNS
-topic. Done when scaling the ECS service to 0 tasks produces an alert within 5 minutes. On Render the same monitor works against `https://leaveflow-api-vihangajm.onrender.com/api/health`, but expect the free plan's idle sleep to cause slow first checks.
+**What runs today (Render): `.github/workflows/uptime.yml`.** Every 5 minutes,
+GitHub's servers (outside Render) check:
+- `https://leaveflow-api-vihangajm.onrender.com/api/health` returns `"status":"ok"`, allowing
+  90 s and one retry for a free-plan cold start
+- the website returns 200 with the app shell
+
+A failed run emails the repo owner. That's GitHub's default for failed scheduled
+workflows: Settings → Notifications → **Actions** → "Only notify for failed workflows".
+It needs no extra account, and it also keeps the free service from sleeping.
+
+- **Test the alert:** Actions → **uptime** → **Run workflow**, with `api_url` set to
+  `https://leaveflow-api-vihangajm.invalid`. The run goes red and the email arrives. Or
+  suspend the API in the Render dashboard, wait for the next scheduled run, then resume it.
+- **Limit:** GitHub may start scheduled runs several minutes late under load, so
+  "alert within 5 minutes" is usually met but not guaranteed. For a guaranteed
+  5-minute interval, add UptimeRobot too (below).
+
+**UptimeRobot (free), or the AWS version:** New monitor → HTTP(s) – Keyword →
+the health URL above (on AWS: `https://leave.ceylonroots.lk/api/health`), interval
+5 min, keyword `"status":"ok"`, alert contact = your email (on AWS, the same email
+as the SNS topic). On AWS, done when scaling the ECS service to 0 tasks produces an
+alert within 5 minutes.
 
 ## Alert hygiene
 
