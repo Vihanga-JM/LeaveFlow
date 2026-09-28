@@ -20,5 +20,6 @@ EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
   CMD wget -q -O- "http://localhost:${PORT:-4000}/api/health" || exit 1
 
-# Lab 3: migrations run on every start (idempotent), then the server takes PID 1
-CMD ["sh", "-c", "node src/db/migrate.js && exec node src/server.js"]
+# Lab 3: migrations run on every start (idempotent), then the seed password is
+# replaced if DEMO_USER_PASSWORD is set, then the server takes PID 1
+CMD ["sh", "-c", "node src/db/migrate.js && node src/db/rotateDemoPasswords.js && exec node src/server.js"]
