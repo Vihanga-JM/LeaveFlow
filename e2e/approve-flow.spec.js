@@ -24,6 +24,7 @@ test('employee applies, manager approves, status and balance update', async ({ p
   await login(page, 'ruwan@ceylonroots.lk'); // Ishara's manager
   await page.getByRole('button', { name: 'Approvals' }).click();
   await expect(page.getByText('Ishara Fernando')).toBeVisible();
+  await expect(page.getByText('No one else is off')).toBeVisible();
   await page.getByRole('button', { name: 'Approve' }).first().click();
   await expect(page.getByText('No pending requests')).toBeVisible();
   await signOut(page);

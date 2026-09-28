@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import TeamAbsences from './TeamAbsences';
 
 export default function Approvals() {
   const [pending, setPending] = useState([]);
@@ -50,7 +51,12 @@ export default function Approvals() {
         <p key={r.id}>
           <strong>{r.employee_name}</strong> —{' '}
           {r.start_date.slice(0, 10)} to{' '}
-          {r.end_date.slice(0, 10)} ({r.reason}){' '}
+          {r.end_date.slice(0, 10)} ({r.reason})
+          <TeamAbsences
+            from={r.start_date.slice(0, 10)}
+            to={r.end_date.slice(0, 10)}
+            excludeUserId={r.user_id}
+          />{' '}
 
           <button onClick={() => decide(r.id, 'approve')}>
             Approve

@@ -11,7 +11,10 @@ function requireAuth(req, res, next) {
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET); // { id, role }
     next();
-  } catch {
+  } catch (err) {
+    // "invalid signature" (wrong/rotated secret) vs "jwt expired" (normal) —
+    // the distinction is what makes a secret-rotation incident diagnosable.
+    req.log?.warn({ jwtError: err.name, reason: err.message }, "token rejected");
     res
       .status(401)
       .json({
