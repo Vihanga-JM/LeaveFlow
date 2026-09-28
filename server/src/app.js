@@ -19,6 +19,7 @@ app.use("/api", require("./routes/auth"));
 app.use("/api/leave-requests", require("./routes/leaveRequests"));
 app.use("/api/balances", require("./routes/balances"));
 app.use("/api/team", require("./routes/team"));
+app.use("/api/admin", require("./routes/admin"));
 
 app.use((req, res) => {
   res.status(404).json({

@@ -65,6 +65,27 @@ router.post(
       });
     }
 
+    const overlap = await pool.query(
+      `
+      SELECT 1
+      FROM leave_requests
+      WHERE user_id = $1
+      AND status IN ('PENDING', 'APPROVED')
+      AND start_date <= $3
+      AND end_date >= $2
+      `,
+      [userId, start_date, end_date],
+    );
+
+    if (overlap.rowCount) {
+      return res.status(409).json({
+        error: {
+          code: "OVERLAPPING_REQUEST",
+          message: "You already have a pending or approved request on these dates",
+        },
+      });
+    }
+
     const ins = await pool.query(
       `
       INSERT INTO leave_requests

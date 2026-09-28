@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Login from './Login';
 import MyLeave from './MyLeave';
 import Approvals from './Approvals';
+import AllRequests from './AllRequests';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -12,6 +13,7 @@ export default function App() {
   }
 
   const canApprove = user.role !== 'EMPLOYEE';
+  const isHr = user.role === 'HR_ADMIN';
 
   return (
     <>
@@ -28,6 +30,12 @@ export default function App() {
           </button>
         )}
 
+        {isHr && (
+          <button onClick={() => setPage('all')}>
+            All Requests
+          </button>
+        )}
+
         <button
           onClick={() => {
             localStorage.removeItem('token');
@@ -38,7 +46,9 @@ export default function App() {
         </button>
       </nav>
 
-      {page === 'approvals' ? <Approvals /> : <MyLeave />}
+      {page === 'approvals' && <Approvals />}
+      {page === 'all' && <AllRequests />}
+      {page === 'leave' && <MyLeave />}
     </>
   );
 }
