@@ -8,7 +8,7 @@ log "request completed". Often gets worse over hours and "fixes itself" on resta
 
 1. RDS console → Monitoring → **DatabaseConnections**. Compare with `max_connections`
    (`SHOW max_connections;` — on `db.t4g.micro` it's roughly 80–100).
-2. How many API instances are running? App Runner → Metrics → active instances.
+2. How many API instances are running? ECS → service → running tasks (Render free: always 1).
    Each instance opens up to `pg.Pool` `max` connections (default **10**).
 3. Who holds the connections?
    ```sql
@@ -30,8 +30,8 @@ log "request completed". Often gets worse over hours and "fixes itself" on resta
 
 ## Mitigate
 
-1. Restart the API (App Runner → Deploy the same image). Leaked clients die with the process.
-2. If instances × 10 > max_connections: cap App Runner max instances, or set a smaller
+1. Restart the API (ECS → service → force new deployment; Render → Manual Deploy → Restart). Leaked clients die with the process.
+2. If instances × 10 > max_connections: cap the service's maximum task count, or set a smaller
    pool (`new Pool({ max: 5 })`), then redeploy.
 3. Kill a stuck session only if you know what it is: `SELECT pg_terminate_backend(<pid>);`
 

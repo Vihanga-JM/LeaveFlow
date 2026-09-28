@@ -4,10 +4,10 @@
 
 The API writes one JSON line per request (pino): `req.id` (also returned as the
 `x-request-id` header), method, url, `res.statusCode`, `responseTime`. The
-Authorization header is redacted. App Runner ships stdout to CloudWatch Logs:
+Authorization header is redacted. On Render: dashboard → `leaveflow-api-vihangajm` → **Logs**. On AWS, ECS ships stdout to CloudWatch Logs:
 
 ```bash
-aws logs tail /aws/apprunner/leaveflow-api/<service-id>/application \
+aws logs tail <service log group> \
   --region ap-south-1 --follow --since 15m \
   --filter-pattern '{ $.res.statusCode = 401 }'
 ```
@@ -24,8 +24,8 @@ aws sns subscribe --topic-arn arn:aws:sns:ap-south-1:123456789012:leaveflow-aler
 
 aws cloudwatch put-metric-alarm --region ap-south-1 \
   --alarm-name leaveflow-api-5xx \
-  --namespace AWS/AppRunner --metric-name 5xxStatusResponses \
-  --dimensions Name=ServiceName,Value=leaveflow-api Name=ServiceID,Value=<service-id> \
+  --namespace AWS/ApplicationELB --metric-name HTTPCode_Target_5XX_Count \
+  --dimensions Name=LoadBalancer,Value=app/<alb-name>/<alb-id> \
   --statistic Sum --period 300 --evaluation-periods 1 \
   --threshold 5 --comparison-operator GreaterThanOrEqualToThreshold \
   --treat-missing-data notBreaching \
@@ -42,7 +42,7 @@ certificate expiry).
 
 UptimeRobot (free): New monitor → HTTP(s) → `https://leave.ceylonroots.lk/api/health`,
 interval 5 min, keyword `"status":"ok"`; alert contact = the same email as the SNS
-topic. Done when pausing the App Runner service produces an alert within 5 minutes.
+topic. Done when scaling the ECS service to 0 tasks produces an alert within 5 minutes. On Render the same monitor works against `https://leaveflow-api-vihangajm.onrender.com/api/health`, but expect the free plan's idle sleep to cause slow first checks.
 
 ## Alert hygiene
 
