@@ -5,6 +5,7 @@ const { asyncHandler } = require("../middleware/errors");
 const { validate, required, isDate } = require("../middleware/validate");
 
 const { leaveDays } = require("../lib/leaveDays");
+const { HOLIDAYS } = require("../lib/holidays");
 
 const router = express.Router();
 
@@ -56,7 +57,7 @@ router.post(
 
     const used = bal.rowCount ? Number(bal.rows[0].used_days) : 0;
 
-    if (used + leaveDays(start_date, end_date) > lt.rows[0].annual_allocation) {
+    if (used + leaveDays(start_date, end_date, HOLIDAYS) > lt.rows[0].annual_allocation) {
       return res.status(409).json({
         error: {
           code: "INSUFFICIENT_BALANCE",
@@ -250,7 +251,7 @@ router.patch(
             r.user_id,
             r.leave_type_id,
             Number(r.start_date.slice(0, 4)),
-            leaveDays(r.start_date, r.end_date),
+            leaveDays(r.start_date, r.end_date, HOLIDAYS),
           ],
         );
       }

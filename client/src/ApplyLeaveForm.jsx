@@ -12,22 +12,23 @@ export default function ApplyLeaveForm({ onCreated }) {
   const [error, setError] = useState(null);
 
   const update = (key) => (e) => {
-  setForm({
-    ...form,
-    [key]: key === 'leave_type_id'
-      ? Number(e.target.value)
-      : e.target.value
-  });
-};
+    setForm({
+      ...form,
+      [key]: key === 'leave_type_id'
+        ? Number(e.target.value)
+        : e.target.value
+    });
+  };
+
+  const datesValid =
+    form.start_date !== '' &&
+    form.end_date !== '' &&
+    form.end_date >= form.start_date;
 
   async function submit(e) {
     e.preventDefault();
 
-    if (!form.start_date || !form.end_date) {
-      return setError('Both dates are required');
-    }
-
-    if (form.end_date < form.start_date) {
+    if (!datesValid) {
       return setError('End date is before start date');
     }
 
@@ -38,6 +39,7 @@ export default function ApplyLeaveForm({ onCreated }) {
       });
 
       setError(null);
+      setForm({ ...form, start_date: '', end_date: '', reason: '' });
       onCreated();
     } catch (err) {
       setError(err.message);
@@ -48,35 +50,49 @@ export default function ApplyLeaveForm({ onCreated }) {
     <form onSubmit={submit}>
       <h3>Apply for Leave</h3>
 
-      <select
-        value={form.leave_type_id}
-        onChange={update('leave_type_id')}
-      >
-        <option value="1">Annual</option>
-        <option value="2">Casual</option>
-        <option value="3">Sick</option>
-      </select>
+      <label>
+        Leave type
+        <select
+          value={form.leave_type_id}
+          onChange={update('leave_type_id')}
+        >
+          <option value="1">Annual</option>
+          <option value="2">Casual</option>
+          <option value="3">Sick</option>
+        </select>
+      </label>
 
-      <input
-        type="date"
-        value={form.start_date}
-        onChange={update('start_date')}
-      />
+      <label>
+        Start date
+        <input
+          type="date"
+          value={form.start_date}
+          onChange={update('start_date')}
+        />
+      </label>
 
-      <input
-        type="date"
-        value={form.end_date}
-        onChange={update('end_date')}
-      />
+      <label>
+        End date
+        <input
+          type="date"
+          value={form.end_date}
+          onChange={update('end_date')}
+        />
+      </label>
 
-      <input
-        value={form.reason}
-        onChange={update('reason')}
-        placeholder="Reason"
-      />
+      <label>
+        Reason
+        <input
+          value={form.reason}
+          onChange={update('reason')}
+        />
+      </label>
 
-      <button type="submit">Apply</button>
+      <button type="submit" disabled={!datesValid}>Apply</button>
 
+      {form.start_date && form.end_date && !datesValid && (
+        <p role="alert">End date is before start date</p>
+      )}
       {error && <p role="alert">{error}</p>}
     </form>
   );

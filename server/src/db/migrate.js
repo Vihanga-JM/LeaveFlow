@@ -1,11 +1,10 @@
 const fs = require("fs");
 const path = require("path");
 
-const pool = require("./pool");
-
 const dir = path.join(__dirname, "migrations");
 
-async function migrate() {
+// Applies every not-yet-applied .sql file in migrations/, in filename order.
+async function migrate(pool) {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       filename TEXT PRIMARY KEY,
@@ -34,11 +33,17 @@ async function migrate() {
 
     console.log("applied", file);
   }
-
-  await pool.end();
 }
 
-migrate().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+module.exports = { migrate };
+
+if (require.main === module) {
+  const pool = require("./pool");
+
+  migrate(pool)
+    .then(() => pool.end())
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}
