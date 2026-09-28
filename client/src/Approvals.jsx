@@ -6,18 +6,21 @@ export default function Approvals() {
   const [notes, setNotes] = useState({});
   const [error, setError] = useState(null);
 
-  async function load() {
-    try {
-      setError(null);
-      const data = await api('/team/requests');
-      setPending(data);
-    } catch (err) {
-      setError(err.message);
-    }
+  function load() {
+    return api('/team/requests')
+      .then((data) => {
+        setPending(data);
+        setError(null);
+      })
+      .catch((err) => setError(err.message));
   }
 
   useEffect(() => {
-    load();
+    let active = true;
+    api('/team/requests')
+      .then((data) => active && setPending(data))
+      .catch((err) => active && setError(err.message));
+    return () => { active = false; };
   }, []);
 
   async function decide(id, action) {
