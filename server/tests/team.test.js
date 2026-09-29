@@ -1,3 +1,4 @@
+const pool = require("../src/db/pool");
 const { app, request, loginAs, apply, decide, ISHARA, RUWAN, DILINI } = require("./helpers");
 
 function absences(token, from, to) {
@@ -39,7 +40,9 @@ describe("GET /api/team/absences", () => {
     const dilini = await loginAs(DILINI);
     const ruwan = await loginAs(RUWAN);
     const { body } = await apply(dilini, { start_date: "2026-03-10", end_date: "2026-03-10" });
-    await decide(dilini, body.id, "approve"); // HR approving her own, for the fixture
+    // Nobody may approve their own request, and Dilini is the only HR, so mark
+    // it approved directly — this test is about visibility, not decisions.
+    await pool.query("UPDATE leave_requests SET status = 'APPROVED' WHERE id = $1", [body.id]);
     const asRuwan = await absences(ruwan, "2026-03-09", "2026-03-13");
     const asHr = await absences(dilini, "2026-03-09", "2026-03-13");
     expect(asRuwan.body).toEqual([]);

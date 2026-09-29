@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { api } from './api';
 import Login from './Login';
 import MyLeave from './MyLeave';
 import Approvals from './Approvals';
@@ -20,6 +21,23 @@ export default function App() {
     };
     window.addEventListener('leaveflow:logout', onLogout);
     return () => window.removeEventListener('leaveflow:logout', onLogout);
+  }, []);
+
+  useEffect(() => {
+    // Every tab shares one token (localStorage is per site, not per tab). When
+    // another tab signs in as someone else or signs out, follow it — otherwise
+    // this tab would keep showing the old user while acting as the new one.
+    const onStorage = (e) => {
+      if (e.key !== 'token') return;
+      setPage('leave');
+      if (!e.newValue) {
+        setUser(null);
+        return;
+      }
+      api('/me').then(setUser).catch(() => setUser(null));
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   if (!user) {
@@ -70,7 +88,8 @@ export default function App() {
         </div>
       </header>
 
-      <div className="container">
+      {/* keyed by user so a switch in another tab reloads every page's data */}
+      <div className="container" key={user.id}>
         {page === 'approvals' && <Approvals />}
         {page === 'all' && <AllRequests />}
         {page === 'holidays' && <Holidays />}

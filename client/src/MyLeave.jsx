@@ -21,6 +21,17 @@ export default function MyLeave() {
       .catch((err) => setError(err.message));
   }
 
+  // Only a PENDING request can be cancelled (the API enforces it too); the
+  // reserved days go back as soon as the list reloads.
+  async function cancel(id) {
+    try {
+      await api(`/leave-requests/${id}`, { method: 'PATCH', body: { action: 'cancel' } });
+      await load();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     let active = true;
     fetchAll()
@@ -82,6 +93,15 @@ export default function MyLeave() {
                 </span>
               </span>
               <span className={`badge badge-${r.status.toLowerCase()}`}>{r.status}</span>
+              {r.status === 'PENDING' && (
+                <button
+                  className="btn-danger btn-small"
+                  onClick={() => cancel(r.id)}
+                  aria-label={`Cancel request ${r.start_date.slice(0, 10)}`}
+                >
+                  Cancel
+                </button>
+              )}
 
               {r.status === 'REJECTED' && r.decision_note && (
                 <span className="row-note">Manager&apos;s note: {r.decision_note}</span>
