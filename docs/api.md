@@ -139,11 +139,15 @@ Own requests, newest first. HR_ADMIN receives everyone's.
   `days` to the balance, in one transaction.
 - **reject** — same roles; `decision_note` is required and shown to the employee.
 - **cancel** — the owner only, while `PENDING`. Releases the reserved days.
+- Nobody may **approve or reject their own** request, HR included. A manager's own leave
+  goes to HR. With a single HR admin, HR's own leave needs a second approver (another
+  HR admin or the MD), which the seed data doesn't have.
 
 | Status | Code | Message |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Invalid action |
 | 400 | `VALIDATION` | decision_note is required when rejecting |
+| 403 | `SELF_DECISION` | You can't approve or reject your own request |
 | 403 | `FORBIDDEN` | Only the owner can cancel · Managers only · Not your report |
 | 404 | `NOT_FOUND` | No such request |
 | 409 | `INVALID_STATE` | Request is not pending |
@@ -169,7 +173,7 @@ Your balances for the current year, one row per leave type.
 ## GET `/team/requests`
 
 Pending requests from your direct reports (HR_ADMIN: everyone), oldest first — request
-objects plus `employee_name`.
+objects plus `employee_name`. Your own requests are never included.
 
 ## GET `/team/absences?from=YYYY-MM-DD&to=YYYY-MM-DD`
 

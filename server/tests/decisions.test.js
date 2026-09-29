@@ -1,4 +1,4 @@
-const { loginAs, apply, decide, balanceOf, ISHARA, RUWAN, DILINI } = require("./helpers");
+const { app, request, loginAs, apply, decide, balanceOf, ISHARA, RUWAN, DILINI } = require("./helpers");
 
 describe("PATCH /api/leave-requests/:id — approve / reject", () => {
   test("manager approving a report's request deducts the working days", async () => {
@@ -39,12 +39,50 @@ describe("PATCH /api/leave-requests/:id — approve / reject", () => {
     expect(res.body.error.message).toBe("Not your report");
   });
 
-  test("HR_ADMIN may decide any request", async () => {
+  test("HR_ADMIN may decide anyone else's request", async () => {
     const ishara = await loginAs(ISHARA);
     const dilini = await loginAs(DILINI);
     const { body } = await apply(ishara, { start_date: "2026-03-09", end_date: "2026-03-09" });
     const res = await decide(dilini, body.id, "approve");
     expect(res.status).toBe(200);
+  });
+
+  test("HR approves a manager's own leave (managers have no manager)", async () => {
+    const ruwan = await loginAs(RUWAN);
+    const dilini = await loginAs(DILINI);
+    const { body } = await apply(ruwan, { start_date: "2026-03-09", end_date: "2026-03-09" });
+    const res = await decide(dilini, body.id, "approve");
+    expect(res.status).toBe(200);
+  });
+
+  test("nobody approves or rejects their own request — not even HR", async () => {
+    const dilini = await loginAs(DILINI);
+    const ruwan = await loginAs(RUWAN);
+    const own = await apply(dilini, { start_date: "2026-03-09", end_date: "2026-03-09" });
+    const ruwansOwn = await apply(ruwan, { start_date: "2026-03-10", end_date: "2026-03-10" });
+
+    const hrApprove = await decide(dilini, own.body.id, "approve");
+    expect(hrApprove.status).toBe(403);
+    expect(hrApprove.body.error.code).toBe("SELF_DECISION");
+
+    const hrReject = await decide(dilini, own.body.id, "reject", { decision_note: "no" });
+    expect(hrReject.status).toBe(403);
+
+    const managerApprove = await decide(ruwan, ruwansOwn.body.id, "approve");
+    expect(managerApprove.body.error.code).toBe("SELF_DECISION");
+
+    // ...but cancelling your own pending request is still allowed.
+    expect((await decide(dilini, own.body.id, "cancel")).status).toBe(200);
+  });
+
+  test("your own pending requests don't appear in your approvals inbox", async () => {
+    const dilini = await loginAs(DILINI);
+    const ishara = await loginAs(ISHARA);
+    await apply(dilini, { start_date: "2026-03-09", end_date: "2026-03-09" });
+    await apply(ishara, { start_date: "2026-03-10", end_date: "2026-03-10" });
+
+    const inbox = await request(app).get("/api/team/requests").set("Authorization", `Bearer ${dilini}`);
+    expect(inbox.body.map((r) => r.employee_name)).toEqual(["Ishara Fernando"]);
   });
 
   test("rejecting without a decision_note is a 400", async () => {

@@ -17,6 +17,7 @@ router.get(
        FROM leave_requests lr
        JOIN users u ON u.id = lr.user_id
        WHERE lr.status = 'PENDING'
+         AND lr.user_id <> $1  -- your own requests never land in your inbox
          AND (u.manager_id = $1 OR $2 = 'HR_ADMIN')
        ORDER BY lr.created_at`,
       [req.user.id, req.user.role],

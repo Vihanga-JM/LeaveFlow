@@ -207,6 +207,16 @@ router.patch(
     }
 
     if (action !== "cancel") {
+      // Nobody decides their own leave — not a manager, and not HR either.
+      if (user_id === req.user.id) {
+        return res.status(403).json({
+          error: {
+            code: "SELF_DECISION",
+            message: "You can't approve or reject your own request",
+          },
+        });
+      }
+
       if (!["MANAGER", "HR_ADMIN"].includes(req.user.role)) {
         return res.status(403).json({
           error: {
