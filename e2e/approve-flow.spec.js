@@ -22,7 +22,8 @@ test('employee applies, manager approves, status and balance update', async ({ p
   await signOut(page);
 
   await login(page, 'ruwan@ceylonroots.lk'); // Ishara's manager
-  await page.getByRole('button', { name: 'Approvals' }).click();
+  await page.getByRole('button', { name: 'Notifications, 1 unread' }).click();
+  await page.getByText('Ishara Fernando asked for Annual leave').click(); // opens Approvals
   await expect(page.getByText('Ishara Fernando')).toBeVisible();
   await expect(page.getByText('No one else is off')).toBeVisible();
   await page.getByRole('button', { name: 'Approve' }).first().click();
@@ -30,6 +31,9 @@ test('employee applies, manager approves, status and balance update', async ({ p
   await signOut(page);
 
   await login(page, 'ishara@ceylonroots.lk');
+  await page.getByRole('button', { name: 'Notifications, 1 unread' }).click();
+  await expect(page.getByText('Ruwan Jayasuriya approved your Annual leave')).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.getByText('APPROVED', { exact: true })).toBeVisible();
   await expect(page.getByText('9 of 14 days left')).toBeVisible();
 });

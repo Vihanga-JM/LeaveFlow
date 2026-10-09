@@ -6,6 +6,7 @@ const { validate, required, isDate } = require("../middleware/validate");
 
 const { leaveDays, DAY_PARTS } = require("../lib/leaveDays");
 const { holidaysBetween } = require("../lib/holidays");
+const { notify } = require("../lib/notifications");
 
 const router = express.Router();
 
@@ -134,6 +135,8 @@ router.post(
         `,
         [userId, leave_type_id, start_date, end_date, reason, dayPart, days],
       );
+
+      await notify(client, ins.rows[0].id, "SUBMITTED", userId);
 
       await client.query("COMMIT");
       res.status(201).json(ins.rows[0]);
@@ -304,6 +307,8 @@ router.patch(
           ],
         );
       }
+
+      await notify(client, r.id, status, req.user.id);
 
       await client.query("COMMIT");
       res.json(r);

@@ -29,6 +29,7 @@ app.use("/api/team", require("./routes/team"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/holidays", require("./routes/holidays"));
 app.use("/api/calendar", require("./routes/calendar"));
+app.use("/api/notifications", require("./routes/notifications"));
 
 app.use((req, res) => {
   res.status(404).json({
