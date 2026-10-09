@@ -6,12 +6,16 @@ import Approvals from './Approvals';
 import AllRequests from './AllRequests';
 import Holidays from './Holidays';
 import Calendar from './Calendar';
+import Notifications from './Notifications';
 
 const ROLE_LABELS = { EMPLOYEE: 'Employee', MANAGER: 'Manager', HR_ADMIN: 'HR admin' };
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [page, setPage] = useState('leave');
+  // Bumped when a notification is clicked, so the page it opens reloads even
+  // if it was already showing (e.g. My Leave right after an approval).
+  const [visit, setVisit] = useState(0);
 
   useEffect(() => {
     // Reset the page too, so the next person to log in on this browser
@@ -75,6 +79,12 @@ export default function App() {
         </nav>
 
         <div className="user">
+          <Notifications
+            onNavigate={(target) => {
+              setPage(target);
+              setVisit((v) => v + 1);
+            }}
+          />
           <span>{user.name}</span>
           <span className="role">{ROLE_LABELS[user.role] || user.role}</span>
           <button
@@ -90,8 +100,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* keyed by user so a switch in another tab reloads every page's data */}
-      <div className="container" key={user.id}>
+      {/* keyed by user so a switch in another tab reloads every page's data,
+          and by visit so opening a page from a notification shows fresh data */}
+      <div className="container" key={`${user.id}-${visit}`}>
         {page === 'calendar' && <Calendar role={user.role} />}
         {page === 'approvals' && <Approvals />}
         {page === 'all' && <AllRequests />}

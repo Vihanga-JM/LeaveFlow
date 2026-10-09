@@ -42,6 +42,9 @@ One shape, everywhere:
 | GET    | `/admin/requests`     | HR_ADMIN                                                | 200     | 401, 403                |
 | GET    | `/holidays`           | Any user                                                | 200     | 401                     |
 | GET    | `/calendar?month=`    | Any user (own / own + reports / everyone)               | 200     | 400, 401                |
+| GET    | `/notifications`      | Own notifications                                       | 200     | 401                     |
+| PATCH  | `/notifications/:id/read` | Own notification                                    | 204     | 400, 401, 404           |
+| POST   | `/notifications/read-all` | Own notifications                                   | 204     | 401                     |
 | POST   | `/holidays`           | HR_ADMIN                                                | 201     | 400, 401, 403, 409      |
 | DELETE | `/holidays/:date`     | HR_ADMIN                                                | 204     | 400, 401, 403, 404      |
 
@@ -188,6 +191,9 @@ reports (HR_ADMIN: everyone).
 ]
 ```
 
+An empty array means nobody is off. `400 VALIDATION` if either date is missing/invalid or
+`to` < `from`.
+
 ## GET `/calendar?month=YYYY-MM`
 
 The team calendar (US-7): leave overlapping the month, plus the month's public holidays.
@@ -209,8 +215,39 @@ cancelled and rejected leave isn't absence.
 }
 ```
 
-An empty array means nobody is off. `400 VALIDATION` if either date is missing/invalid or
-`to` < `from`.
+## Notifications (US-8)
+
+In-app notifications, shown under the bell in the top bar. They are written in the same
+transaction as the change they describe, so a refused request or decision leaves none.
+
+| Event                        | Who is notified                                              |
+| ---------------------------- | ------------------------------------------------------------ |
+| `SUBMITTED` — new request    | The requester's manager; HR admins if they have no manager   |
+| `CANCELLED` — owner withdrew | Same as above                                                |
+| `APPROVED` / `REJECTED`      | The requester                                                |
+
+### GET `/notifications`
+
+Your latest 30, newest first, plus the unread count. The text is built from the request
+at read time, so it always matches the request.
+
+```json
+{
+  "unread": 1,
+  "items": [
+    { "id": 7, "kind": "REJECTED", "read_at": null, "created_at": "2026-10-09T05:12:44.120Z",
+      "leave_request_id": 12, "actor_name": "Ruwan Jayasuriya",
+      "employee_name": "Ishara Fernando", "leave_type": "Annual",
+      "start_date": "2026-10-13", "end_date": "2026-10-15", "day_part": "FULL",
+      "days": "3.0", "decision_note": "Release week" }
+  ]
+}
+```
+
+### PATCH `/notifications/:id/read` · POST `/notifications/read-all`
+
+Both return `204`. Someone else's notification is a `404` (its existence isn't confirmed);
+a non-numeric id is a `400 VALIDATION`.
 
 ## GET `/admin/requests`
 

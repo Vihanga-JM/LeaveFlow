@@ -85,4 +85,6 @@ test suites keep passing.
 ## Parked (backlog, not this capstone)
 
 ~~Team calendar view~~ — built after the capstone (US-7, issue #42) · email
-notifications · audit log table · half days attached to multi-day requests (Q1).
+notifications (in-app notifications were built after the capstone; sending email still
+needs a mail provider — US-8, issue #43) · audit log table · half days attached to
+multi-day requests (Q1).
