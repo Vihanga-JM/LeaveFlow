@@ -41,6 +41,7 @@ One shape, everywhere:
 | GET    | `/team/absences`      | MANAGER (own reports), HR_ADMIN (all)                   | 200     | 400, 401, 403           |
 | GET    | `/admin/requests`     | HR_ADMIN                                                | 200     | 401, 403                |
 | GET    | `/holidays`           | Any user                                                | 200     | 401                     |
+| GET    | `/calendar?month=`    | Any user (own / own + reports / everyone)               | 200     | 400, 401                |
 | POST   | `/holidays`           | HR_ADMIN                                                | 201     | 400, 401, 403, 409      |
 | DELETE | `/holidays/:date`     | HR_ADMIN                                                | 204     | 400, 401, 403, 404      |
 
@@ -185,6 +186,27 @@ reports (HR_ADMIN: everyone).
   { "id": 3, "user_id": 2, "employee_name": "Ishara Fernando",
     "start_date": "2026-03-10", "end_date": "2026-03-11", "leave_type_id": 1 }
 ]
+```
+
+## GET `/calendar?month=YYYY-MM`
+
+The team calendar (US-7): leave overlapping the month, plus the month's public holidays.
+`month` defaults to the current month; anything that isn't `YYYY-MM` is a 400.
+
+Who appears: an EMPLOYEE sees their own leave, a MANAGER sees their own and their
+reports', HR_ADMIN sees everyone. Only `PENDING` and `APPROVED` requests are included —
+cancelled and rejected leave isn't absence.
+
+```json
+{
+  "month": "2026-10", "first": "2026-10-01", "last": "2026-10-31",
+  "leave": [
+    { "id": 12, "user_id": 2, "employee_name": "Ishara Fernando", "leave_type": "Annual",
+      "start_date": "2026-10-09", "end_date": "2026-10-09", "day_part": "PM",
+      "days": "0.5", "status": "PENDING" }
+  ],
+  "holidays": [ { "holiday_date": "2026-10-25", "name": "Vap Full Moon Poya Day" } ]
+}
 ```
 
 An empty array means nobody is off. `400 VALIDATION` if either date is missing/invalid or
