@@ -84,5 +84,5 @@ test suites keep passing.
 
 ## Parked (backlog, not this capstone)
 
-Team calendar view · email notifications · audit log table · half days attached to
-multi-day requests (Q1).
+~~Team calendar view~~ — built after the capstone (US-7, issue #42) · email
+notifications · audit log table · half days attached to multi-day requests (Q1).

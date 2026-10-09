@@ -537,6 +537,265 @@ th.right {
   text-align: right;
 }
 
+/* ---------- Calendar (US-7) ---------- */
+
+/* One colour per person: a strong edge and a soft fill, swapped for dark mode. */
+:root {
+  --p1: #2f5bea; --p1-soft: #e3eafd;
+  --p2: #0f8a7e; --p2-soft: #dcf3f0;
+  --p3: #7c4ddb; --p3-soft: #ede6fb;
+  --p4: #c2570c; --p4-soft: #fcebdc;
+  --p5: #c0306b; --p5-soft: #fbe3ec;
+  --p6: #3d7d1f; --p6-soft: #e4f2dc;
+  --holiday: #9a6200;
+  --holiday-soft: #fff6e0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --p1: #7d9bff; --p1-soft: #1f2a4d;
+    --p2: #4fd1c2; --p2-soft: #12322f;
+    --p3: #b394ff; --p3-soft: #2a2148;
+    --p4: #ffa463; --p4-soft: #3b2614;
+    --p5: #ff7fb0; --p5-soft: #3d1d2b;
+    --p6: #8fd46a; --p6-soft: #1e3317;
+    --holiday: #f3b755;
+    --holiday-soft: #2e2510;
+  }
+}
+
+.page-title {
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+.cal {
+  padding: 16px;
+}
+
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cal-toolbar .btn-small {
+  min-width: 34px;
+  font-size: 1rem;
+}
+
+.cal-month {
+  margin: 0 8px;
+  min-width: 150px;
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+.cal-today-btn {
+  margin-left: auto;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cal-weekday {
+  padding: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.cal-cell {
+  min-height: 104px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.cal-cell.outside {
+  background: var(--bg);
+}
+
+.cal-cell.weekend,
+.cal-weekday.weekend {
+  background: var(--surface-2);
+}
+
+.cal-cell.weekend .cal-day {
+  color: var(--muted);
+}
+
+.cal-cell.holiday {
+  background: var(--holiday-soft);
+  box-shadow: inset 3px 0 0 var(--holiday);
+}
+
+.cal-day {
+  font-size: 0.85rem;
+  font-weight: 600;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.cal-cell.today .cal-day {
+  background: var(--primary);
+  color: #fff;
+}
+
+.cal-holiday {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--holiday);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cal-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--chip-soft);
+  border-left: 3px solid var(--chip);
+  min-width: 0;
+}
+
+/* Pending: same person colour, but outlined and dashed — not yet certain. */
+.cal-chip.pending {
+  background: transparent;
+  border: 1px dashed var(--chip);
+  border-left-width: 3px;
+  color: var(--muted);
+}
+
+.cal-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-half {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--chip);
+  border: 1px solid var(--chip);
+}
+
+.cal-more {
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding-left: 4px;
+}
+
+.p1 { --chip: var(--p1); --chip-soft: var(--p1-soft); }
+.p2 { --chip: var(--p2); --chip-soft: var(--p2-soft); }
+.p3 { --chip: var(--p3); --chip-soft: var(--p3-soft); }
+.p4 { --chip: var(--p4); --chip-soft: var(--p4-soft); }
+.p5 { --chip: var(--p5); --chip-soft: var(--p5-soft); }
+.p6 { --chip: var(--p6); --chip-soft: var(--p6-soft); }
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.cal-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.swatch.approved {
+  background: var(--p1-soft);
+  border: none;
+  border-left: 3px solid var(--p1);
+}
+
+.swatch.pending {
+  border: 1px dashed var(--p1);
+  border-left: 3px solid var(--p1);
+}
+
+.swatch.holiday {
+  background: var(--holiday-soft);
+  border: none;
+  border-left: 3px solid var(--holiday);
+}
+
+.swatch.weekend {
+  background: var(--surface-2);
+}
+
+.swatch.today {
+  background: var(--primary);
+  border: none;
+  border-radius: 999px;
+}
+
+.swatch.person {
+  background: var(--chip);
+  border: none;
+  border-radius: 999px;
+}
+
 /* ---------- Small screens ---------- */
 
 @media (max-width: 640px) {
@@ -569,5 +828,66 @@ th.right {
 
   .actions input {
     width: 100%;
+  }
+}
+
+/* Calendar on phones: cells shrink, names become coloured dots (the list below
+   the grid carries the details). */
+@media (max-width: 640px) {
+  .cal {
+    padding: 10px;
+  }
+
+  .cal-month {
+    min-width: 0;
+    flex: 1;
+    font-size: 1rem;
+  }
+
+  .cal-today-btn {
+    margin-left: 0;
+  }
+
+  .cal-weekday {
+    padding: 6px 0;
+    font-size: 0.65rem;
+  }
+
+  .cal-cell {
+    min-height: 58px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .cal-day {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
+
+  .cal-holiday,
+  .cal-chip-name,
+  .cal-half,
+  .cal-more {
+    display: none;
+  }
+
+  .cal-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .cal-chip {
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border-radius: 999px;
+    border: none;
+    background: var(--chip);
+  }
+
+  .cal-chip.pending {
+    background: transparent;
+    border: 2px solid var(--chip);
   }
 }

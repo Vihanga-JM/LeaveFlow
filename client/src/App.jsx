@@ -5,6 +5,7 @@ import MyLeave from './MyLeave';
 import Approvals from './Approvals';
 import AllRequests from './AllRequests';
 import Holidays from './Holidays';
+import Calendar from './Calendar';
 
 const ROLE_LABELS = { EMPLOYEE: 'Employee', MANAGER: 'Manager', HR_ADMIN: 'HR admin' };
 
@@ -49,6 +50,7 @@ export default function App() {
 
   const tabs = [
     { id: 'leave', label: 'My Leave', show: true },
+    { id: 'calendar', label: 'Calendar', show: true },
     { id: 'approvals', label: 'Approvals', show: canApprove },
     { id: 'all', label: 'All Requests', show: isHr },
     { id: 'holidays', label: 'Holidays', show: isHr },
@@ -90,6 +92,7 @@ export default function App() {
 
       {/* keyed by user so a switch in another tab reloads every page's data */}
       <div className="container" key={user.id}>
+        {page === 'calendar' && <Calendar role={user.role} />}
         {page === 'approvals' && <Approvals />}
         {page === 'all' && <AllRequests />}
         {page === 'holidays' && <Holidays />}
